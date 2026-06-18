@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Template Manager Elite 📝</title>
+    <link rel="icon" href="data:image/svg+xml,&lt;svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22&gt;&lt;text y=%22.9em%22 font-size=%2290%22&gt;📝&lt;/text&gt;&lt;/svg&gt;">
+    
+    <style>
+        /* SISTEMA DE DISEÑO ELITE - COMPACTO Y CENTRADO */
+        :root {
+            --bg: #050505;
+            --surface: #111111;
+            --input-bg: #1a1a1a;
+            --text: #e0e0e0;
+            --text-dim: #888;
+            --border: #2a2a2a;
+            --accent: #2196F3;
+            --success: #2ed573;
+            --warning: #ffb142;
+            --danger: #ff4757;
+            --radius: 12px;
+            --main-width: 500px;
+        }
+
+        body.light-mode {
+            --bg: #f4f7f6; --surface: #ffffff; --input-bg: #f0f2f5;
+            --text: #1a1a1a; --text-dim: #666; --border: #dcdde1;
+            --accent: #1e90ff;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; outline: none; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        
+        body { 
+            background-color: var(--bg); color: var(--text); 
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            min-height: 100vh; padding: 20px; transition: all 0.3s ease;
+        }
+
+        .workspace { 
+            width: 100%; max-width: var(--main-width); display: flex; flex-direction: column; gap: 15px; 
+            margin: auto; animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .card { 
+            background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); 
+            padding: 25px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 12px;
+        }
+
+        h1 { font-size: 1.4rem; color: var(--text); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; cursor: pointer; user-select: none; text-align: center;}
+        h1 span { color: var(--accent); }
+        .subtitle { font-size: 0.75rem; color: var(--text-dim); margin-bottom: 10px; text-align: center; }
+
+        /* FORMULARIOS */
+        .editor-panel {
+            background: rgba(33, 150, 243, 0.05); border: 1px dashed var(--accent); border-radius: 8px;
+            padding: 15px; display: none; flex-direction: column; gap: 10px; animation: fadeIn 0.3s ease;
+        }
+        
+        .f-col { display: flex; flex-direction: column; gap: 5px; }
+        label { font-size: 0.7rem; font-weight: bold; color: var(--text-dim); text-transform: uppercase; }
+        
+        input, textarea { 
+            width: 100%; padding: 10px; background: var(--input-bg); border: 1px solid var(--border);
+            border-radius: 8px; color: var(--text); font-size: 0.9rem; transition: 0.2s;
+        }
+        textarea { resize: vertical; min-height: 80px; line-height: 1.4;}
+        input:focus, textarea:focus { border-color: var(--accent); }
+
+        /* BOTONES */
+        .btn-action {
+            background: transparent; border: 1px solid var(--border); color: var(--text);
+            padding: 10px; border-radius: 8px; font-size: 0.75rem; font-weight: bold;
+            text-transform: uppercase; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-action:hover { border-color: var(--accent); color: var(--accent); background: rgba(33, 150, 243, 0.05); }
+
+        .btn-main {
+            width: 100%; background: var(--accent); color: #000; border: none; padding: 12px; border-radius: 8px; 
+            font-weight: bold; text-transform: uppercase; cursor: pointer; font-size: 0.8rem; transition: 0.2s;
+        }
+        .btn-main:active { transform: scale(0.98); }
+
+        .btn-back {
+            background: rgba(128, 128, 128, 0.1); color: var(--text); border: 1px solid var(--border);
+            padding: 8px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.75rem;
+            display: inline-flex; align-items: center; gap: 6px; transition: 0.2s;
+        }
+        .btn-back:hover { background: var(--border); }
+
+        .btn-export-html {
+            width: 100%; background: var(--accent); color: #000; border: none; padding: 14px; 
+            border-radius: 8px; font-weight: bold; text-transform: uppercase; cursor: pointer; 
+            font-size: 0.85rem; transition: 0.2s; margin-top: 10px; box-shadow: 0 4px 15px rgba(33, 150, 243, 0.2);
+        }
+        .btn-export-html:active { transform: scale(0.98); }
+        .btn-export-html:hover { filter: brightness(1.1); }
+
+        /* TARJETAS Y DRAG & DROP */
+        .items-list { display: flex; flex-direction: column; gap: 10px; }
+
+        .tpl-card {
+            background: var(--input-bg); border: 1px solid var(--border); border-left: 4px solid var(--accent);
+            border-radius: 8px; padding: 12px 15px; cursor: grab; transition: transform 0.2s, border-color 0.2s; position: relative;
+            user-select: none;
+        }
+        .tpl-card:hover { border-color: var(--text-dim); }
+        .tpl-card:active { cursor: grabbing; }
+
+        .tpl-card.dragging {
+            opacity: 0.4;
+            border: 2px dashed var(--accent);
+            transform: scale(0.98);
+        }
+
+        .group-card { border-left-color: var(--success); }
+        .group-card:hover { border-color: var(--success); }
+
+        .item-header { display: flex; justify-content: space-between; align-items: center; pointer-events: none;}
+        .item-title { font-size: 0.9rem; font-weight: bold; color: var(--text); }
+        .item-badge { background: var(--surface); color: var(--text-dim); padding: 2px 8px; border-radius: 10px; font-size: 0.65rem; border: 1px solid var(--border);}
+
+        .item-preview { 
+            font-size: 0.8rem; color: var(--text-dim); margin-top: 5px; 
+            white-space: pre-wrap; pointer-events: none;
+        }
+
+        /* VISTAS */
+        .view-section { display: none; flex-direction: column; gap: 12px; width: 100%; animation: fadeIn 0.3s ease; }
+        .view-section.active { display: flex; }
+
+        #toast {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--success); color: #000; 
+            padding: 10px 20px; border-radius: 30px; font-weight: bold; display: none; z-index: 9999; font-size: 0.8rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3); animation: fadeIn 0.2s ease;
+        }
+    </style>
+</head>
+<body class="light-mode">
+
+    <div id="toast" style="display: none;">📝 Guardado</div>
+
+    <div class="workspace">
+        <div class="card">
+            <div style="text-align: center;">
+                <h1 id="themeToggleBtn" title="Cambiar Tema">Template Manager <span>Elite</span></h1>
+                <div class="subtitle" id="mainSubtitle">Sincronizando con Firebase Cloud...</div>
+            </div>
+
+            <div id="view-groups" class="view-section active">
+                <button class="btn-action" id="btn-add-group">➕ Crear Nuevo Grupo</button>
+
+                <div class="editor-panel" id="groupPanel">
+                    <div class="f-col">
+                        <label>Nombre del Grupo</label>
+                        <input type="text" id="grp-title" placeholder="Ej: Gestión de ATC...">
+                    </div>
+                    <div style="display: flex; gap: 8px; margin-top: 5px;">
+                        <button class="btn-main" id="btnSaveGroup">💾 Guardar</button>
+                        <button class="btn-main" style="background: transparent; border: 1px solid var(--border); color: var(--text);" id="btnCancelGroup">Cancelar</button>
+                    </div>
+                    <button id="btn-del-group" class="btn-action" style="color: var(--danger); border-color: var(--danger); margin-top:5px; display:none;">🗑️ Eliminar Grupo</button>
+                </div>
+                
+                <div id="groups-container" class="items-list">
+                    <!-- Grupos dinámicos -->
+                </div>
+
+                <button class="btn-export-html" id="btnSyncStatus">☁️ Sincronizado con Firebase</button>
+            </div>
+
+            <div id="view-templates" class="view-section">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 10px;">
+                    <button class="btn-back" id="btnBackGroups">🔙 Volver</button>
+                    <div style="font-weight: bold; color: var(--accent); font-size: 0.85rem;" id="current-group-title">--</div>
+                </div>
+
+                <button class="btn-action" id="btn-toggle-tpl-editor">➕ Añadir Plantilla</button>
+
+                <div class="editor-panel" id="editorPanel" style="display: none;">
+                    <input type="hidden" id="tpl-id" value="">
+                    <div class="f-col">
+                        <label>Nombre</label>
+                        <input type="text" id="tpl-title" placeholder="Título...">
+                    </div>
+                    <div class="f-col">
+                        <label>Contenido (Usa la palabra FECHA en mayúscula)</label>
+                        <textarea id="tpl-content" placeholder="Escribe aquí... usa FECHA y se reemplazará sola al copiar"></textarea>
+                    </div>
+                    <div style="display: flex; gap: 8px; margin-top: 5px;">
+                        <button id="btn-save-tpl" class="btn-main">💾 Guardar</button>
+                        <button class="btn-main" style="background: transparent; border: 1px solid var(--border); color: var(--text);" id="btnCancelTpl">Cancelar</button>
+                    </div>
+                    <button id="btn-del-tpl" class="btn-action" style="color: var(--danger); border-color: var(--danger); margin-top: 5px; display: none;">🗑️ Eliminar Plantilla</button>
+                </div>
+                
+                <div id="templates-container" class="items-list">
+                    <!-- Plantillas dinámicas -->
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+<script type="module">
+    // --- SDK DE FIREBASE DESDE CDN (PARA GITHUB PAGES) ---
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { 
+        getFirestore, doc, setDoc, onSnapshot 
+    } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyA-GOHCvRMG4vYOjpm7fqycIhAxK5cxPMc",
+      authDomain: "template-manager-elite-8b377.firebaseapp.com",
+      projectId: "template-manager-elite-8b377",
+      storageBucket: "template-manager-elite-8b377.firebasestorage.app",
+      messagingSenderId: "570080591074",
+      appId: "1:570080591074:web:0ccc81c327269eb880f2bb"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    
+    // Almacenamos todo en un único documento centralizado para preservar grupos, plantillas y orden exacto
+    const docRef = doc(db, "boveda_templates", "configuracion_general");
+
+    // --- VARIABLES DE ESTADO ---
+    let templates = [];
+    let groups = [];
+    let currentGroup = "";
+    let editingGroupId = null;
+
+    let draggedElement = null;
+    let isDraggingAction = false;
+
+    // --- MANEJO DE TEMA ---
+    if (localStorage.getItem('templates_theme') === 'light') document.body.classList.add('light-mode');
+    document.getElementById('themeToggleBtn').addEventListener('click', () => {
+        document.body.classList.toggle('light-mode');
+        localStorage.setItem('templates_theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
+    });
+
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        t.innerText = msg; t.style.display = 'block';
+        setTimeout(() => t.style.display = 'none', 1500);
+    }
+
+    function getDynamicDate() {
+        const now = new Date();
+        const dd = String(now.getDate()).padStart(2, '0');
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const yy = String(now.getFullYear()).slice(-2);
+        return `${dd}/${mm}/${yy}`;
+    }
+
+    // --- ESCUCHA EN TIEMPO REAL DESDE FIREBASE ---
+    onSnapshot(docRef, (docSnap) => {
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            templates = data.templates || [];
+            groups = data.groups || [];
+        } else {
+            // Inicialización por defecto en la nube si está vacía
+            groups = ["Gestión de ATC", "Base de Abonos", "Panel - Solicitudes"];
+            templates = [
+                { id: "tpl_1", title: "Saludo + conexión", content: "Buenos días. Conectado.", group: "Gestión de ATC" },
+                { id: "tpl_2", title: "No contesta", content: "De la base de abonos rechazados, pero NO CONTESTA. Hoy FECHA.", group: "Base de Abonos" }
+            ];
+            saveToFirebase();
+        }
+        document.getElementById('mainSubtitle').innerText = "Arrastrar para ordenar | Click Izq: Copiar | Click Der: Editar";
+        renderGroups();
+        if (document.getElementById('view-templates').classList.contains('active')) {
+            renderTemplates();
+        }
+    }, (error) => {
+        console.error("Error conectando a Firebase:", error);
+        document.getElementById('mainSubtitle').innerText = "Error de sincronización offline";
+    });
+
+    // --- GUARDAR ESTADO EN FIREBASE ---
+    async function saveToFirebase() {
+        try {
+            await setDoc(docRef, {
+                templates: templates,
+                groups: groups
+            });
+        } catch (e) {
+            console.error("Error guardando en la nube:", e);
+            showToast("❌ Error al sincronizar");
+        }
+    }
+
+    // --- SISTEMA DRAG & DROP ---
+    function setupDragZone(container) {
+        container.addEventListener('dragover', e => {
+            e.preventDefault();
+            if (!draggedElement) return;
+            const afterElement = getDragAfterElement(container, e.clientY);
+            if (afterElement == null) {
+                container.appendChild(draggedElement);
+            } else {
+                container.insertBefore(draggedElement, afterElement);
+            }
+        });
+    }
+
+    function getDragAfterElement(container, y) {
+        const draggableElements = [...container.querySelectorAll('.tpl-card:not(.dragging)')];
+        return draggableElements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+            if (offset < 0 && offset > closest.offset) {
+                return { offset: offset, element: child };
+            } else {
+                return closest;
+            }
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+
+    function handleDragStart(e) {
+        draggedElement = this;
+        this.classList.add('dragging');
+        isDraggingAction = true;
+    }
+
+    function handleDragEnd() {
+        this.classList.remove('dragging');
+        draggedElement = null;
+        setTimeout(() => isDraggingAction = false, 100);
+
+        if (this.classList.contains('group-card')) {
+            const newOrderGroups = Array.from(document.getElementById('groups-container').children).map(c => c.dataset.group);
+            groups = newOrderGroups;
+            saveToFirebase();
+        } else {
+            const newOrderIds = Array.from(document.getElementById('templates-container').children).map(c => c.dataset.id);
+            let newTemplates = templates.filter(t => t.group !== currentGroup);
+            for(let id of newOrderIds) {
+                let tpl = templates.find(t => t.id === id);
+                if(tpl) newTemplates.push(tpl);
+            }
+            templates = newTemplates;
+            saveToFirebase();
+        }
+    }
+
+    // --- LOGICA GRUPOS ---
+    function openGroupEditor(name = "") {
+        editingGroupId = name;
+        document.getElementById('groupPanel').style.display = "flex";
+        document.getElementById('btn-add-group').style.display = "none";
+        document.getElementById('grp-title').value = name;
+        document.getElementById('btn-del-group').style.display = name ? "block" : "none";
+        document.getElementById('grp-title').focus();
+    }
+
+    function closeGroupEditor() {
+        document.getElementById('groupPanel').style.display = "none";
+        document.getElementById('btn-add-group').style.display = "flex";
+    }
+
+    function saveGroup() {
+        const name = document.getElementById('grp-title').value.trim();
+        if (!name) return;
+        
+        if (editingGroupId) {
+            const oldName = editingGroupId;
+            const idx = groups.indexOf(oldName);
+            groups[idx] = name;
+            templates.forEach(t => { if(t.group === oldName) t.group = name; });
+        } else {
+            if (groups.includes(name)) return showToast('Ya existe');
+            groups.push(name);
+        }
+        
+        closeGroupEditor(); 
+        saveToFirebase(); 
+        showToast('📁 Grupo Guardado');
+    }
+
+    function renderGroups() {
+        const container = document.getElementById('groups-container');
+        container.innerHTML = '';
+        groups.forEach(g => {
+            const count = templates.filter(t => t.group === g).length;
+            const div = document.createElement('div');
+            
+            div.className = 'tpl-card group-card';
+            div.setAttribute('draggable', 'true');
+            div.dataset.group = g;
+            
+            div.addEventListener('dragstart', handleDragStart);
+            div.addEventListener('dragend', handleDragEnd);
+            
+            div.addEventListener('click', () => {
+                if (isDraggingAction) return; 
+                openGroupView(g);
+            });
+            
+            div.addEventListener('contextmenu', (e) => { 
+                e.preventDefault(); 
+                if (isDraggingAction) return;
+                openGroupEditor(g); 
+            });
+
+            div.innerHTML = `
+                <div class="item-header">
+                    <span class="item-title">📁 ${g}</span>
+                    <span class="item-badge">${count} items</span>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    function deleteCurrentGroup() {
+        if (confirm(`¿Borrar grupo "${editingGroupId}" y todas sus plantillas vinculadas?`)) {
+            groups = groups.filter(g => g !== editingGroupId);
+            templates = templates.filter(t => t.group !== editingGroupId);
+            closeGroupEditor();
+            saveToFirebase();
+        }
+    }
+
+    // --- LOGICA PLANTILLAS ---
+    function openGroupView(g) {
+        currentGroup = g;
+        document.getElementById('current-group-title').innerText = g;
+        document.getElementById('view-groups').classList.remove('active');
+        document.getElementById('view-templates').classList.add('active');
+        renderTemplates();
+    }
+
+    function goBackToGroups() {
+        document.getElementById('view-templates').classList.remove('active');
+        document.getElementById('view-groups').classList.add('active');
+        renderGroups();
+    }
+
+    function openTemplateEditor(id = "") {
+        document.getElementById('editorPanel').style.display = "flex";
+        document.getElementById('btn-toggle-tpl-editor').style.display = "none";
+        if (id) {
+            const t = templates.find(x => x.id === id);
+            document.getElementById('tpl-id').value = t.id;
+            document.getElementById('tpl-title').value = t.title;
+            document.getElementById('tpl-content').value = t.content;
+            document.getElementById('btn-del-tpl').style.display = "block";
+        } else {
+            document.getElementById('tpl-id').value = "";
+            document.getElementById('tpl-title').value = "";
+            document.getElementById('tpl-content').value = "";
+            document.getElementById('btn-del-tpl').style.display = "none";
+        }
+    }
+
+    function closeTemplateEditor() {
+        document.getElementById('editorPanel').style.display = "none";
+        document.getElementById('btn-toggle-tpl-editor').style.display = "flex";
+    }
+
+    function saveTemplate() {
+        const id = document.getElementById('tpl-id').value;
+        const title = document.getElementById('tpl-title').value.trim();
+        const content = document.getElementById('tpl-content').value.trim();
+        if (!title || !content) return;
+
+        if (id) {
+            const idx = templates.findIndex(t => t.id === id);
+            templates[idx].title = title;
+            templates[idx].content = content;
+        } else {
+            templates.push({ id: 'tpl_' + Date.now(), title, content, group: currentGroup });
+        }
+        closeTemplateEditor(); 
+        saveToFirebase(); 
+        showToast('📝 Plantilla Guardada');
+    }
+
+    function renderTemplates() {
+        const container = document.getElementById('templates-container');
+        const list = templates.filter(t => t.group === currentGroup);
+        container.innerHTML = '';
+        
+        list.forEach(t => {
+            const div = document.createElement('div');
+            div.className = 'tpl-card';
+            div.setAttribute('draggable', 'true');
+            div.dataset.id = t.id;
+
+            div.addEventListener('dragstart', handleDragStart);
+            div.addEventListener('dragend', handleDragEnd);
+
+            div.addEventListener('click', () => { 
+                if (isDraggingAction) return;
+                copyTpl(t.content); 
+            });
+            
+            div.addEventListener('contextmenu', (e) => { 
+                e.preventDefault(); 
+                if (isDraggingAction) return;
+                openTemplateEditor(t.id); 
+            });
+
+            const displayContent = t.content.replace(/FECHA/g, getDynamicDate());
+
+            div.innerHTML = `
+                <div class="item-header"><span class="item-title">${t.title}</span></div>
+                <div class="item-preview">${displayContent}</div>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    function copyTpl(txt) {
+        const finalTxt = txt.replace(/FECHA/g, getDynamicDate());
+        navigator.clipboard.writeText(finalTxt).then(() => showToast('✅ Copiado'));
+    }
+
+    function deleteCurrentTemplate() {
+        const id = document.getElementById('tpl-id').value;
+        if(confirm('¿Deseas borrar esta plantilla?')) {
+            templates = templates.filter(t => t.id !== id);
+            closeTemplateEditor();
+            saveToFirebase();
+        }
+    }
+
+    // --- ENLACE DE EVENTOS DOM ---
+    document.getElementById('btn-add-group').addEventListener('click', () => openGroupEditor());
+    document.getElementById('btnSaveGroup').addEventListener('click', saveGroup);
+    document.getElementById('btnCancelGroup').addEventListener('click', closeGroupEditor);
+    document.getElementById('btn-del-group').addEventListener('click', deleteCurrentGroup);
+    
+    document.getElementById('btnBackGroups').addEventListener('click', goBackToGroups);
+    document.getElementById('btn-toggle-tpl-editor').addEventListener('click', () => openTemplateEditor());
+    document.getElementById('btn-save-tpl').addEventListener('click', saveTemplate);
+    document.getElementById('btnCancelTpl').addEventListener('click', closeTemplateEditor);
+    document.getElementById('btn-del-tpl').addEventListener('click', deleteCurrentTemplate);
+
+    setupDragZone(document.getElementById('groups-container'));
+    setupDragZone(document.getElementById('templates-container'));
+</script>
+
+</body>
+</html>
