@@ -165,10 +165,9 @@
                 </div>
                 
                 <div id="groups-container" class="items-list">
-                    <!-- Grupos dinámicos -->
-                </div>
+                    </div>
 
-                <button class="btn-export-html" id="btnSyncStatus">☁️ Sincronizado con Firebase</button>
+                <button class="btn-export-html" id="btnSyncStatus">☁️ Forzar Resincronización Local</button>
             </div>
 
             <div id="view-templates" class="view-section">
@@ -197,19 +196,15 @@
                 </div>
                 
                 <div id="templates-container" class="items-list">
-                    <!-- Plantillas dinámicas -->
-                </div>
+                    </div>
             </div>
 
         </div>
     </div>
 
 <script type="module">
-    // --- SDK DE FIREBASE DESDE CDN (PARA GITHUB PAGES) ---
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-    import { 
-        getFirestore, doc, setDoc, onSnapshot 
-    } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyA-GOHCvRMG4vYOjpm7fqycIhAxK5cxPMc",
@@ -222,20 +217,22 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    
-    // Almacenamos todo en un único documento centralizado para preservar grupos, plantillas y orden exacto
     const docRef = doc(db, "boveda_templates", "configuracion_general");
 
-    // --- VARIABLES DE ESTADO ---
     let templates = [];
     let groups = [];
     let currentGroup = "";
     let editingGroupId = null;
-
     let draggedElement = null;
     let isDraggingAction = false;
 
-    // --- MANEJO DE TEMA ---
+    // Valores iniciales seguros de respaldo si Firebase está vacío o denegado temporalmente
+    const defaultGroups = ["Gestión de ATC", "Base de Abonos", "Panel - Solicitudes"];
+    const defaultTemplates = [
+        { id: "tpl_default_1", title: "Saludo + conexión", content: "Buenos días. Conectado.", group: "Gestión de ATC" },
+        { id: "tpl_default_2", title: "No contesta", content: "De la base de abonos rechazados, pero NO CONTESTA. Hoy FECHA.", group: "Base de Abonos" }
+    ];
+
     if (localStorage.getItem('templates_theme') === 'light') document.body.classList.add('light-mode');
     document.getElementById('themeToggleBtn').addEventListener('click', () => {
         document.body.classList.toggle('light-mode');
@@ -250,51 +247,47 @@
 
     function getDynamicDate() {
         const now = new Date();
-        const dd = String(now.getDate()).padStart(2, '0');
-        const mm = String(now.getMonth() + 1).padStart(2, '0');
-        const yy = String(now.getFullYear()).slice(-2);
-        return `${dd}/${mm}/${yy}`;
+        return `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getFullYear()).slice(-2)}`;
     }
 
-    // --- ESCUCHA EN TIEMPO REAL DESDE FIREBASE ---
+    // --- ESCUCHA SEGURA EN TIEMPO REAL ---
     onSnapshot(docRef, (docSnap) => {
         if (docSnap.exists()) {
             const data = docSnap.data();
             templates = data.templates || [];
             groups = data.groups || [];
         } else {
-            // Inicialización por defecto en la nube si está vacía
-            groups = ["Gestión de ATC", "Base de Abonos", "Panel - Solicitudes"];
-            templates = [
-                { id: "tpl_1", title: "Saludo + conexión", content: "Buenos días. Conectado.", group: "Gestión de ATC" },
-                { id: "tpl_2", title: "No contesta", content: "De la base de abonos rechazados, pero NO CONTESTA. Hoy FECHA.", group: "Base de Abonos" }
-            ];
+            groups = [...defaultGroups];
+            templates = [...defaultTemplates];
             saveToFirebase();
         }
+        updateUI();
+    }, (error) => {
+        console.warn("Firestore denegado o cargando offline. Usando estructura local segura.", error);
+        groups = groups.length ? groups : [...defaultGroups];
+        templates = templates.length ? templates : [...defaultTemplates];
+        updateUI();
+        document.getElementById('mainSubtitle').innerText = "Modo Offline / Revisa Reglas Firestore";
+    });
+
+    function updateUI() {
         document.getElementById('mainSubtitle').innerText = "Arrastrar para ordenar | Click Izq: Copiar | Click Der: Editar";
         renderGroups();
         if (document.getElementById('view-templates').classList.contains('active')) {
             renderTemplates();
         }
-    }, (error) => {
-        console.error("Error conectando a Firebase:", error);
-        document.getElementById('mainSubtitle').innerText = "Error de sincronización offline";
-    });
+    }
 
-    // --- GUARDAR ESTADO EN FIREBASE ---
     async function saveToFirebase() {
         try {
-            await setDoc(docRef, {
-                templates: templates,
-                groups: groups
-            });
+            await setDoc(docRef, { templates: templates, groups: groups });
         } catch (e) {
-            console.error("Error guardando en la nube:", e);
-            showToast("❌ Error al sincronizar");
+            console.error("Error al sincronizar con Firebase:", e);
+            showToast("❌ Error al sincronizar online");
         }
     }
 
-    // --- SISTEMA DRAG & DROP ---
+    // --- DRAG & DROP ---
     function setupDragZone(container) {
         container.addEventListener('dragover', e => {
             e.preventDefault();
@@ -321,7 +314,7 @@
         }, { offset: Number.NEGATIVE_INFINITY }).element;
     }
 
-    function handleDragStart(e) {
+    function handleDragStart() {
         draggedElement = this;
         this.classList.add('dragging');
         isDraggingAction = true;
@@ -333,9 +326,7 @@
         setTimeout(() => isDraggingAction = false, 100);
 
         if (this.classList.contains('group-card')) {
-            const newOrderGroups = Array.from(document.getElementById('groups-container').children).map(c => c.dataset.group);
-            groups = newOrderGroups;
-            saveToFirebase();
+            groups = Array.from(document.getElementById('groups-container').children).map(c => c.dataset.group);
         } else {
             const newOrderIds = Array.from(document.getElementById('templates-container').children).map(c => c.dataset.id);
             let newTemplates = templates.filter(t => t.group !== currentGroup);
@@ -344,11 +335,11 @@
                 if(tpl) newTemplates.push(tpl);
             }
             templates = newTemplates;
-            saveToFirebase();
         }
+        saveToFirebase();
     }
 
-    // --- LOGICA GRUPOS ---
+    // --- GRUPOS ---
     function openGroupEditor(name = "") {
         editingGroupId = name;
         document.getElementById('groupPanel').style.display = "flex";
@@ -373,13 +364,12 @@
             groups[idx] = name;
             templates.forEach(t => { if(t.group === oldName) t.group = name; });
         } else {
-            if (groups.includes(name)) return showToast('Ya existe');
+            if (groups.includes(name)) return showToast('Ya existe el grupo');
             groups.push(name);
         }
-        
         closeGroupEditor(); 
         saveToFirebase(); 
-        showToast('📁 Grupo Guardado');
+        showToast('📁 Grupo guardado');
     }
 
     function renderGroups() {
@@ -388,37 +378,22 @@
         groups.forEach(g => {
             const count = templates.filter(t => t.group === g).length;
             const div = document.createElement('div');
-            
             div.className = 'tpl-card group-card';
             div.setAttribute('draggable', 'true');
             div.dataset.group = g;
             
             div.addEventListener('dragstart', handleDragStart);
             div.addEventListener('dragend', handleDragEnd);
-            
-            div.addEventListener('click', () => {
-                if (isDraggingAction) return; 
-                openGroupView(g);
-            });
-            
-            div.addEventListener('contextmenu', (e) => { 
-                e.preventDefault(); 
-                if (isDraggingAction) return;
-                openGroupEditor(g); 
-            });
+            div.addEventListener('click', () => { if (!isDraggingAction) openGroupView(g); });
+            div.addEventListener('contextmenu', (e) => { e.preventDefault(); if (!isDraggingAction) openGroupEditor(g); });
 
-            div.innerHTML = `
-                <div class="item-header">
-                    <span class="item-title">📁 ${g}</span>
-                    <span class="item-badge">${count} items</span>
-                </div>
-            `;
+            div.innerHTML = `<div class="item-header"><span class="item-title">📁 ${g}</span><span class="item-badge">${count} items</span></div>`;
             container.appendChild(div);
         });
     }
 
     function deleteCurrentGroup() {
-        if (confirm(`¿Borrar grupo "${editingGroupId}" y todas sus plantillas vinculadas?`)) {
+        if (confirm(`¿Borrar grupo "${editingGroupId}" y sus plantillas?`)) {
             groups = groups.filter(g => g !== editingGroupId);
             templates = templates.filter(t => t.group !== editingGroupId);
             closeGroupEditor();
@@ -426,7 +401,7 @@
         }
     }
 
-    // --- LOGICA PLANTILLAS ---
+    // --- PLANTILLAS ---
     function openGroupView(g) {
         currentGroup = g;
         document.getElementById('current-group-title').innerText = g;
@@ -478,13 +453,13 @@
         }
         closeTemplateEditor(); 
         saveToFirebase(); 
-        showToast('📝 Plantilla Guardada');
+        showToast('📝 Plantilla guardada');
     }
 
     function renderTemplates() {
         const container = document.getElementById('templates-container');
-        const list = templates.filter(t => t.group === currentGroup);
         container.innerHTML = '';
+        const list = templates.filter(t => t.group === currentGroup);
         
         list.forEach(t => {
             const div = document.createElement('div');
@@ -494,24 +469,11 @@
 
             div.addEventListener('dragstart', handleDragStart);
             div.addEventListener('dragend', handleDragEnd);
-
-            div.addEventListener('click', () => { 
-                if (isDraggingAction) return;
-                copyTpl(t.content); 
-            });
-            
-            div.addEventListener('contextmenu', (e) => { 
-                e.preventDefault(); 
-                if (isDraggingAction) return;
-                openTemplateEditor(t.id); 
-            });
+            div.addEventListener('click', () => { if (!isDraggingAction) copyTpl(t.content); });
+            div.addEventListener('contextmenu', (e) => { e.preventDefault(); if (!isDraggingAction) openTemplateEditor(t.id); });
 
             const displayContent = t.content.replace(/FECHA/g, getDynamicDate());
-
-            div.innerHTML = `
-                <div class="item-header"><span class="item-title">${t.title}</span></div>
-                <div class="item-preview">${displayContent}</div>
-            `;
+            div.innerHTML = `<div class="item-header"><span class="item-title">${t.title}</span></div><div class="item-preview">${displayContent}</div>`;
             container.appendChild(div);
         });
     }
@@ -522,29 +484,27 @@
     }
 
     function deleteCurrentTemplate() {
-        const id = document.getElementById('tpl-id').value;
         if(confirm('¿Deseas borrar esta plantilla?')) {
-            templates = templates.filter(t => t.id !== id);
+            templates = templates.filter(t => t.id !== document.getElementById('tpl-id').value);
             closeTemplateEditor();
             saveToFirebase();
         }
     }
 
-    // --- ENLACE DE EVENTOS DOM ---
+    // --- LISTENERS ---
     document.getElementById('btn-add-group').addEventListener('click', () => openGroupEditor());
     document.getElementById('btnSaveGroup').addEventListener('click', saveGroup);
     document.getElementById('btnCancelGroup').addEventListener('click', closeGroupEditor);
     document.getElementById('btn-del-group').addEventListener('click', deleteCurrentGroup);
-    
     document.getElementById('btnBackGroups').addEventListener('click', goBackToGroups);
     document.getElementById('btn-toggle-tpl-editor').addEventListener('click', () => openTemplateEditor());
     document.getElementById('btn-save-tpl').addEventListener('click', saveTemplate);
     document.getElementById('btnCancelTpl').addEventListener('click', closeTemplateEditor);
     document.getElementById('btn-del-tpl').addEventListener('click', deleteCurrentTemplate);
+    document.getElementById('btnSyncStatus').addEventListener('click', () => { saveToFirebase(); showToast("☁️ Forzando subida..."); });
 
     setupDragZone(document.getElementById('groups-container'));
     setupDragZone(document.getElementById('templates-container'));
 </script>
-
 </body>
 </html>
