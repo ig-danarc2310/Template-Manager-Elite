@@ -226,12 +226,9 @@
     let draggedElement = null;
     let isDraggingAction = false;
 
-    // Valores iniciales seguros de respaldo si Firebase está vacío o denegado temporalmente
-    const defaultGroups = ["Gestión de ATC", "Base de Abonos", "Panel - Solicitudes"];
-    const defaultTemplates = [
-        { id: "tpl_default_1", title: "Saludo + conexión", content: "Buenos días. Conectado.", group: "Gestión de ATC" },
-        { id: "tpl_default_2", title: "No contesta", content: "De la base de abonos rechazados, pero NO CONTESTA. Hoy FECHA.", group: "Base de Abonos" }
-    ];
+    // Base de datos de respaldo local completamente limpia para iniciar desde cero
+    const defaultGroups = [];
+    const defaultTemplates = [];
 
     if (localStorage.getItem('templates_theme') === 'light') document.body.classList.add('light-mode');
     document.getElementById('themeToggleBtn').addEventListener('click', () => {
