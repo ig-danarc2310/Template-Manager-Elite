@@ -240,7 +240,7 @@
 </div>
 
 <script>
-    // 🔗 URL Oficial Directa (Verificada en tu captura image_5309cc.png)
+    // URL verificada exactamente según tu consola
     const FIREBASE_BASE_URL = "https://calculadora-recompensas-elite-default-rtdb.firebaseio.com/";
     const FIREBASE_AUTH_TOKEN = "5QdVyvxhQm9OILtpW5QKbur4U2T3ia5JaIe3M7lN";
 
@@ -292,7 +292,6 @@
     unlockBtn.addEventListener('click', verifyAccess);
     pinInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') verifyAccess(); });
 
-    // Canal REST directo nativo (Sincronización Cloud con bypass de Token Secreto)
     async function syncToFirebase() {
         localStorage.setItem('elite_backup_records', JSON.stringify(records));
         const encryptedPayload = encryptData(JSON.stringify(records));
