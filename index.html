@@ -239,10 +239,25 @@
     </div>
 </div>
 
-<script>
-    // URL verificada exactamente según tu consola
-    const FIREBASE_BASE_URL = "https://calculadora-recompensas-elite-default-rtdb.firebaseio.com/";
-    const FIREBASE_AUTH_TOKEN = "5QdVyvxhQm9OILtpW5QKbur4U2T3ia5JaIe3M7lN";
+<!-- SDK Módulos Oficiales de Firebase con Bypass de Token Secreto -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+
+    // Tu configuración oficial inyectando el Database Secret directo en la propiedad interna del SDK
+    const firebaseConfig = {
+        apiKey: "AIzaSyBSMdEyYOtBdtOLvjqovyF4b_m3Vuf4wiw",
+        authDomain: "calculadora-recompensas-elite.firebaseapp.com",
+        projectId: "calculadora-recompensas-elite",
+        storageBucket: "calculadora-recompensas-elite.firebasestorage.app",
+        messagingSenderId: "898092962031",
+        appId: "1:898092962031:web:4195876514dfbe12e60b1a",
+        // El SDK necesita el token embebido aquí para saltar el modo bloqueado sin dar error de red o CORS
+        databaseURL: "https://calculadora-recompensas-elite-default-rtdb.firebaseio.com/?auth=5QdVyvxhQm9OILtpW5QKbur4U2T3ia5JaIe3M7lN"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
 
     const RATE_BBVA = 37;       
     const RATE_IBK = 0.03;      
@@ -297,23 +312,19 @@
         const encryptedPayload = encryptData(JSON.stringify(records));
         
         try {
-            const response = await fetch(`${FIREBASE_BASE_URL}rewards.json?auth=${FIREBASE_AUTH_TOKEN}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ payload: encryptedPayload })
-            });
-            if(!response.ok) throw new Error("Error en el servidor remoto.");
-            console.log("Nube sincronizada perfectamente.");
+            // El SDK procesará de forma nativa la autenticación forzada
+            await set(ref(db, 'rewards/data'), { payload: encryptedPayload });
+            console.log("Datos sincronizados en Firebase de forma nativa.");
         } catch (error) {
-            console.error("Error sincronizando:", error);
+            console.error("Error crítico de escritura:", error);
         }
     }
 
     async function loadFromFirebase() {
         try {
-            const response = await fetch(`${FIREBASE_BASE_URL}rewards.json?auth=${FIREBASE_AUTH_TOKEN}`);
-            if(response.ok) {
-                const data = await response.json();
+            const snapshot = await get(ref(db, 'rewards/data'));
+            if (snapshot.exists()) {
+                const data = snapshot.val();
                 if (data && data.payload) {
                     const decryptedStr = decryptData(data.payload);
                     if(decryptedStr) {
@@ -324,7 +335,7 @@
             }
             renderDashboard();
         } catch (error) {
-            console.error("Error leyendo de Firebase:", error);
+            console.error("Error crítico de lectura:", error);
         }
     }
 
