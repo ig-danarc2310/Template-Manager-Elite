@@ -3,11 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Template Manager Elite 📝</title>
-    <link rel="icon" href="data:image/svg+xml,&lt;svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22&gt;&lt;text y=%22.9em%22 font-size=%2290%22&gt;📝&lt;/text&gt;&lt;/svg&gt;">
+    <title>Control de Recompensas Elite 💳</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💳</text></svg>">
+    
+    <!-- CryptoJS para Encriptación Bancaria AES con tu PIN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     
     <style>
-        /* SISTEMA DE DISEÑO ELITE - COMPACTO Y CENTRADO */
+        /* SISTEMA DE DISEÑO ELITE */
         :root {
             --bg: #050505;
             --surface: #111111;
@@ -20,488 +23,427 @@
             --warning: #ffb142;
             --danger: #ff4757;
             --radius: 12px;
-            --main-width: 500px;
+            --max-width: 520px;
+
+            --bbva: #004481;
+            --bbva-light: rgba(33, 150, 243, 0.05);
+            --ibk: #00a65a;
+            --ibk-light: rgba(46, 213, 115, 0.05);
         }
 
         body.light-mode {
             --bg: #f4f7f6; --surface: #ffffff; --input-bg: #f0f2f5;
             --text: #1a1a1a; --text-dim: #666; --border: #dcdde1;
             --accent: #1e90ff;
+            --bbva-light: #eaf1f9;
+            --ibk-light: #e6f6ef;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; outline: none; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
         
         body { 
             background-color: var(--bg); color: var(--text); 
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            min-height: 100vh; padding: 20px; transition: all 0.3s ease;
+            display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+            min-height: 100vh; padding: 30px 20px; transition: all 0.3s ease;
         }
 
         .workspace { 
-            width: 100%; max-width: var(--main-width); display: flex; flex-direction: column; gap: 15px; 
-            margin: auto; animation: fadeIn 0.4s ease;
+            width: 100%; max-width: var(--max-width); display: flex; flex-direction: column; gap: 20px; 
+            margin: 0 auto; animation: fadeIn 0.4s ease;
         }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        /* Pantalla de bloqueo */
+        #auth-screen {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
+            background: var(--bg); display: flex; justify-content: center; align-items: center; z-index: 9999;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
         .card { 
             background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); 
-            padding: 25px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 12px;
+            padding: 25px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 15px;
         }
 
-        h1 { font-size: 1.4rem; color: var(--text); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; cursor: pointer; user-select: none; text-align: center;}
+        h1 { font-size: 1.6rem; color: var(--text); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; cursor: pointer; user-select: none; text-align: center;}
         h1 span { color: var(--accent); }
-        .subtitle { font-size: 0.75rem; color: var(--text-dim); margin-bottom: 10px; text-align: center; }
+        .subtitle { font-size: 0.8rem; color: var(--text-dim); margin-bottom: 10px; text-align: center; }
 
-        /* FORMULARIOS */
-        .editor-panel {
-            background: rgba(33, 150, 243, 0.05); border: 1px dashed var(--accent); border-radius: 8px;
-            padding: 15px; display: none; flex-direction: column; gap: 10px; animation: fadeIn 0.3s ease;
-        }
+        .section-title { font-size: 0.95rem; font-weight: bold; color: var(--text); border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-top: 5px; margin-bottom: 5px; }
+
+        .f-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 5px;}
+        .row { display: flex; gap: 10px; }
+        .col { flex: 1; display: flex; flex-direction: column; gap: 8px;}
         
-        .f-col { display: flex; flex-direction: column; gap: 5px; }
-        label { font-size: 0.7rem; font-weight: bold; color: var(--text-dim); text-transform: uppercase; }
+        label { font-size: 0.75rem; font-weight: bold; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px;}
         
-        input, textarea { 
-            width: 100%; padding: 10px; background: var(--input-bg); border: 1px solid var(--border);
-            border-radius: 8px; color: var(--text); font-size: 0.9rem; transition: 0.2s;
+        input, select, button {
+            width: 100%; padding: 12px; background: var(--input-bg); border: 1px solid var(--border);
+            border-radius: 8px; color: var(--text); font-size: 0.95rem;
+            transition: 0.2s; font-weight: 500;
         }
-        textarea { resize: vertical; min-height: 80px; line-height: 1.4;}
-        input:focus, textarea:focus { border-color: var(--accent); }
+        input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.1); }
 
-        /* BOTONES */
-        .btn-action {
-            background: transparent; border: 1px solid var(--border); color: var(--text);
-            padding: 10px; border-radius: 8px; font-size: 0.75rem; font-weight: bold;
-            text-transform: uppercase; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;
+        button {
+            background-color: var(--accent); color: white; border: none; cursor: pointer; font-weight: bold;
+            text-transform: uppercase; letter-spacing: 0.5px;
         }
-        .btn-action:hover { border-color: var(--accent); color: var(--accent); background: rgba(33, 150, 243, 0.05); }
+        button:hover { opacity: 0.9; }
 
-        .btn-main {
-            width: 100%; background: var(--accent); color: #000; border: none; padding: 12px; border-radius: 8px; 
-            font-weight: bold; text-transform: uppercase; cursor: pointer; font-size: 0.8rem; transition: 0.2s;
-        }
-        .btn-main:active { transform: scale(0.98); }
+        .result-box { padding: 15px; border-radius: 12px; text-align: center; margin-top: 5px; transition: all 0.3s ease; }
+        .result-bbva { background-color: var(--bbva-light); border: 1px solid rgba(33, 150, 243, 0.3); }
+        .result-bbva .val { color: #2196F3; } 
+        body.light-mode .result-bbva .val { color: var(--bbva); }
+        
+        .result-ibk { background-color: var(--ibk-light); border: 1px solid rgba(46, 213, 115, 0.3); }
+        .result-ibk .val { color: var(--success); }
+        body.light-mode .result-ibk .val { color: var(--ibk); }
 
-        .btn-back {
-            background: rgba(128, 128, 128, 0.1); color: var(--text); border: 1px solid var(--border);
-            padding: 8px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.75rem;
-            display: inline-flex; align-items: center; gap: 6px; transition: 0.2s;
-        }
-        .btn-back:hover { background: var(--border); }
+        .result-general { background: var(--input-bg); border: 1px solid var(--border); }
+        .result-general .val { color: var(--text); }
+        .result-total { border: 2px solid var(--accent); background: rgba(33, 150, 243, 0.03); }
 
-        .btn-export-html {
-            width: 100%; background: var(--accent); color: #000; border: none; padding: 14px; 
-            border-radius: 8px; font-weight: bold; text-transform: uppercase; cursor: pointer; 
-            font-size: 0.85rem; transition: 0.2s; margin-top: 10px; box-shadow: 0 4px 15px rgba(33, 150, 243, 0.2);
-        }
-        .btn-export-html:active { transform: scale(0.98); }
-        .btn-export-html:hover { filter: brightness(1.1); }
+        .result-label { font-size: 0.75rem; font-weight: 600; color: var(--text-dim); text-transform: uppercase; }
+        .result-val { font-size: 1.8rem; font-weight: 800; margin: 5px 0; font-family: 'Consolas', monospace;}
+        
+        .badge { display: inline-block; padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: bold; margin-bottom: 8px;}
+        .badge-bbva { background: rgba(33, 150, 243, 0.15); color: #2196F3; border: 1px solid rgba(33, 150, 243, 0.3);}
+        .badge-ibk { background: rgba(46, 213, 115, 0.15); color: var(--success); border: 1px solid rgba(46, 213, 115, 0.3);}
+        
+        body.light-mode .badge-bbva { background: var(--bbva); color: white; }
+        body.light-mode .badge-ibk { background: var(--ibk); color: white; }
 
-        /* TARJETAS Y DRAG & DROP */
-        .items-list { display: flex; flex-direction: column; gap: 10px; }
-
-        .tpl-card {
-            background: var(--input-bg); border: 1px solid var(--border); border-left: 4px solid var(--accent);
-            border-radius: 8px; padding: 12px 15px; cursor: grab; transition: transform 0.2s, border-color 0.2s; position: relative;
-            user-select: none;
-        }
-        .tpl-card:hover { border-color: var(--text-dim); }
-        .tpl-card:active { cursor: grabbing; }
-
-        .tpl-card.dragging {
-            opacity: 0.4;
-            border: 2px dashed var(--accent);
-            transform: scale(0.98);
-        }
-
-        .group-card { border-left-color: var(--success); }
-        .group-card:hover { border-color: var(--success); }
-
-        .item-header { display: flex; justify-content: space-between; align-items: center; pointer-events: none;}
-        .item-title { font-size: 0.9rem; font-weight: bold; color: var(--text); }
-        .item-badge { background: var(--surface); color: var(--text-dim); padding: 2px 8px; border-radius: 10px; font-size: 0.65rem; border: 1px solid var(--border);}
-
-        .item-preview { 
-            font-size: 0.8rem; color: var(--text-dim); margin-top: 5px; 
-            white-space: pre-wrap; pointer-events: none;
-        }
-
-        /* VISTAS */
-        .view-section { display: none; flex-direction: column; gap: 12px; width: 100%; animation: fadeIn 0.3s ease; }
-        .view-section.active { display: flex; }
-
-        #toast {
-            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--success); color: #000; 
-            padding: 10px 20px; border-radius: 30px; font-weight: bold; display: none; z-index: 9999; font-size: 0.8rem;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3); animation: fadeIn 0.2s ease;
-        }
+        .history-container { max-height: 220px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: left; }
+        th, td { padding: 10px; border-bottom: 1px solid var(--border); }
+        th { background: var(--input-bg); font-weight: bold; color: var(--text-dim); text-transform: uppercase; font-size: 0.7rem;}
+        
+        .txt-bbva { color: #2196F3; font-weight: bold;}
+        .txt-ibk { color: var(--success); font-weight: bold;}
+        .btn-del { color: var(--danger); background: none; border: none; padding: 0; width: auto; cursor: pointer; font-size: 0.8rem;}
+        .note { font-size: 0.75rem; color: var(--text-dim); margin-top: 10px; line-height: 1.4; text-align: justify; background: rgba(128,128,128,0.05); padding: 10px; border-radius: 8px; border: 1px dashed var(--border);}
     </style>
 </head>
-<body class="light-mode">
+<body>
 
-    <div id="toast" style="display: none;">📝 Guardado</div>
+<!-- PANTALLA DE BLOQUEO POR CONTRASEÑA -->
+<div id="auth-screen">
+    <div class="card" style="width: 100%; max-width: 320px; text-align: center;">
+        <h1 style="margin-bottom: 10px;">Acceso <span>Elite</span></h1>
+        <label style="margin-bottom: 5px; display: block;">Introduce tu código de seguridad</label>
+        <input type="password" id="pin-input" placeholder="••••" style="text-align: center; font-size: 1.5rem; letter-spacing: 5px;" maxlength="4" autofocus>
+        <button id="unlock-btn">Desbloquear</button>
+    </div>
+</div>
 
-    <div class="workspace">
-        <div class="card">
-            <div style="text-align: center;">
-                <h1 id="themeToggleBtn" title="Cambiar Tema">Template Manager <span>Elite</span></h1>
-                <div class="subtitle" id="mainSubtitle">Sincronizando con Firebase Cloud...</div>
+<div class="workspace" id="main-content" style="display: none;">
+    
+    <div style="text-align: center;">
+        <h1 id="theme-toggle" title="Cambiar Tema">Recompensas <span>Elite</span></h1>
+        <div class="subtitle">Consolidado y Centro de Control Cloud Secure</div>
+    </div>
+
+    <!-- BALANCE GLOBAL -->
+    <div class="card">
+        <div class="section-title">📊 Balance Global Actualizado</div>
+        <div class="result-box result-total">
+            <div class="result-label" style="color: var(--accent);">Patrimonio Total Estimado</div>
+            <div class="result-val" id="global-total" style="color: var(--text); font-size: 2.3rem;">S/ 0.00</div>
+        </div>
+        <div class="row">
+            <div class="col result-box result-bbva">
+                <div class="badge badge-bbva">Fondo BBVA</div>
+                <div class="result-val val" id="balance-pts-bbva" style="font-size: 1.3rem;">0 pts</div>
+                <div class="result-label" id="balance-soles-bbva" style="font-size: 0.8rem; font-weight: bold;">S/ 0.00</div>
             </div>
-
-            <div id="view-groups" class="view-section active">
-                <button class="btn-action" id="btn-add-group">➕ Crear Nuevo Grupo</button>
-
-                <div class="editor-panel" id="groupPanel">
-                    <div class="f-col">
-                        <label>Nombre del Grupo</label>
-                        <input type="text" id="grp-title" placeholder="Ej: Gestión de ATC...">
-                    </div>
-                    <div style="display: flex; gap: 8px; margin-top: 5px;">
-                        <button class="btn-main" id="btnSaveGroup">💾 Guardar</button>
-                        <button class="btn-main" style="background: transparent; border: 1px solid var(--border); color: var(--text);" id="btnCancelGroup">Cancelar</button>
-                    </div>
-                    <button id="btn-del-group" class="btn-action" style="color: var(--danger); border-color: var(--danger); margin-top:5px; display:none;">🗑️ Eliminar Grupo</button>
-                </div>
-                
-                <div id="groups-container" class="items-list">
-                    </div>
-
-                <button class="btn-export-html" id="btnSyncStatus">☁️ Forzar Resincronización Local</button>
+            <div class="col result-box result-ibk">
+                <div class="badge badge-ibk">Fondo Interbank</div>
+                <div class="result-val val" id="balance-miles-ibk" style="font-size: 1.3rem;">0 mll</div>
+                <div class="result-label" id="balance-soles-ibk" style="font-size: 0.8rem; font-weight: bold;">S/ 0.00</div>
             </div>
-
-            <div id="view-templates" class="view-section">
-                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 10px;">
-                    <button class="btn-back" id="btnBackGroups">🔙 Volver</button>
-                    <div style="font-weight: bold; color: var(--accent); font-size: 0.85rem;" id="current-group-title">--</div>
-                </div>
-
-                <button class="btn-action" id="btn-toggle-tpl-editor">➕ Añadir Plantilla</button>
-
-                <div class="editor-panel" id="editorPanel" style="display: none;">
-                    <input type="hidden" id="tpl-id" value="">
-                    <div class="f-col">
-                        <label>Nombre</label>
-                        <input type="text" id="tpl-title" placeholder="Título...">
-                    </div>
-                    <div class="f-col">
-                        <label>Contenido (Usa la palabra FECHA en mayúscula)</label>
-                        <textarea id="tpl-content" placeholder="Escribe aquí... usa FECHA y se reemplazará sola al copiar"></textarea>
-                    </div>
-                    <div style="display: flex; gap: 8px; margin-top: 5px;">
-                        <button id="btn-save-tpl" class="btn-main">💾 Guardar</button>
-                        <button class="btn-main" style="background: transparent; border: 1px solid var(--border); color: var(--text);" id="btnCancelTpl">Cancelar</button>
-                    </div>
-                    <button id="btn-del-tpl" class="btn-action" style="color: var(--danger); border-color: var(--danger); margin-top: 5px; display: none;">🗑️ Eliminar Plantilla</button>
-                </div>
-                
-                <div id="templates-container" class="items-list">
-                    </div>
-            </div>
-
         </div>
     </div>
 
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-    import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+    <!-- REGISTRO FAST-TRACK -->
+    <div class="card">
+        <div class="section-title">🖊️ Registrar Movimiento Fast-Track</div>
+        <div class="row">
+            <div class="col">
+                <label>Programa / Banco</label>
+                <select id="reg-bank">
+                    <option value="bbva">Puntos BBVA</option>
+                    <option value="ibk">Millas Benefit (IBK)</option>
+                </select>
+            </div>
+            <div class="col">
+                <label>Tipo de Operación</label>
+                <select id="reg-type">
+                    <option value="add">Acumular (+)</option>
+                    <option value="sub">Canjear / Redimir (-)</option>
+                </select>
+            </div>
+        </div>
+        <div class="f-group">
+            <label>Cantidad de Unidades</label>
+            <input type="number" id="reg-amount" placeholder="Ej: 2500" min="1">
+        </div>
+        <button id="save-btn">Guardar Movimiento</button>
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyA-GOHCvRMG4vYOjpm7fqycIhAxK5cxPMc",
-      authDomain: "template-manager-elite-8b377.firebaseapp.com",
-      projectId: "template-manager-elite-8b377",
-      storageBucket: "template-manager-elite-8b377.firebasestorage.app",
-      messagingSenderId: "570080591074",
-      appId: "1:570080591074:web:0ccc81c327269eb880f2bb"
-    };
+        <div class="section-title" style="margin-top: 10px;">🕒 Historial en la Nube Protegida</div>
+        <div class="history-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Fecha / Hora</th>
+                        <th>Banco</th>
+                        <th>Monto</th>
+                        <th>Valor Eq.</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="history-table-body"></tbody>
+            </table>
+        </div>
+    </div>
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const docRef = doc(db, "boveda_templates", "configuracion_general");
+    <!-- SIMULADOR -->
+    <div class="card">
+        <div class="section-title">🛍️ Simulador: ¿Cuánto ganaré por una compra?</div>
+        <div class="row" style="margin-bottom: 10px;">
+            <div class="col" style="flex: 2;">
+                <label>Monto Consumo (S/)</label>
+                <input type="number" id="f2-amount" placeholder="0.00">
+            </div>
+            <div class="col">
+                <label>T. Cambio ($)</label>
+                <input type="number" id="f2-tc" value="3.75" step="0.01">
+            </div>
+        </div>
+        <div class="f-group">
+            <label>Categoría (Solo Interbank)</label>
+            <select id="f2-category">
+                <option value="2">Categoría 2x (Online, Restaurantes, etc.)</option>
+                <option value="1">Categoría 1x (Pago de servicios, etc.)</option>
+            </select>
+        </div>
+        <div class="row">
+            <div class="col result-box result-bbva">
+                <div class="badge badge-bbva">BBVA Signature</div>
+                <div class="result-val val" id="f2-res-bbva" style="font-size: 1.4rem;">0.00</div>
+            </div>
+            <div class="col result-box result-ibk">
+                <div class="badge badge-ibk">Interbank Benefit</div>
+                <div class="result-val val" id="f2-res-ibk" style="font-size: 1.4rem;">0.00</div>
+            </div>
+        </div>
+    </div>
+</div>
 
-    let templates = [];
-    let groups = [];
-    let currentGroup = "";
-    let editingGroupId = null;
-    let draggedElement = null;
-    let isDraggingAction = false;
+<script>
+    // Configuración REST de Firebase segura por Token Secreto
+    const FIREBASE_BASE_URL = "https://calculadora-recompensas-elite-default-rtdb.firebaseio.com/";
+    const FIREBASE_AUTH_TOKEN = "5QdVyvxhQm9OILtpW5QKbur4U2T3ia5JaIe3M7lN";
 
-    // Base de datos de respaldo local completamente limpia para iniciar desde cero
-    const defaultGroups = [];
-    const defaultTemplates = [];
+    const RATE_BBVA = 37;       
+    const RATE_IBK = 0.03;      
+    
+    let records = JSON.parse(localStorage.getItem('elite_backup_records')) || [];
+    let SECRET_PIN = "";
 
-    if (localStorage.getItem('templates_theme') === 'light') document.body.classList.add('light-mode');
-    document.getElementById('themeToggleBtn').addEventListener('click', () => {
-        document.body.classList.toggle('light-mode');
-        localStorage.setItem('templates_theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
-    });
+    const pinInput = document.getElementById('pin-input');
+    const unlockBtn = document.getElementById('unlock-btn');
+    const authScreen = document.getElementById('auth-screen');
+    const mainContent = document.getElementById('main-content');
+    const themeToggle = document.getElementById('theme-toggle');
+    const regAmount = document.getElementById('reg-amount');
+    const saveBtn = document.getElementById('save-btn');
+    const f2Amount = document.getElementById('f2-amount');
+    const f2Tc = document.getElementById('f2-tc');
+    const f2Category = document.getElementById('f2-category');
 
-    function showToast(msg) {
-        const t = document.getElementById('toast');
-        t.innerText = msg; t.style.display = 'block';
-        setTimeout(() => t.style.display = 'none', 1500);
+    function encryptData(text) {
+        return CryptoJS.AES.encrypt(text, SECRET_PIN).toString();
     }
 
-    function getDynamicDate() {
-        const now = new Date();
-        return `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getFullYear()).slice(-2)}`;
-    }
-
-    // --- ESCUCHA SEGURA EN TIEMPO REAL ---
-    onSnapshot(docRef, (docSnap) => {
-        if (docSnap.exists()) {
-            const data = docSnap.data();
-            templates = data.templates || [];
-            groups = data.groups || [];
-        } else {
-            groups = [...defaultGroups];
-            templates = [...defaultTemplates];
-            saveToFirebase();
-        }
-        updateUI();
-    }, (error) => {
-        console.warn("Firestore denegado o cargando offline. Usando estructura local segura.", error);
-        groups = groups.length ? groups : [...defaultGroups];
-        templates = templates.length ? templates : [...defaultTemplates];
-        updateUI();
-        document.getElementById('mainSubtitle').innerText = "Modo Offline / Revisa Reglas Firestore";
-    });
-
-    function updateUI() {
-        document.getElementById('mainSubtitle').innerText = "Arrastrar para ordenar | Click Izq: Copiar | Click Der: Editar";
-        renderGroups();
-        if (document.getElementById('view-templates').classList.contains('active')) {
-            renderTemplates();
-        }
-    }
-
-    async function saveToFirebase() {
+    function decryptData(cipherText) {
         try {
-            await setDoc(docRef, { templates: templates, groups: groups });
-        } catch (e) {
-            console.error("Error al sincronizar con Firebase:", e);
-            showToast("❌ Error al sincronizar online");
+            const bytes = CryptoJS.AES.decrypt(cipherText, SECRET_PIN);
+            return bytes.toString(CryptoJS.enc.Utf8);
+        } catch(e) {
+            return ""; 
         }
     }
 
-    // --- DRAG & DROP ---
-    function setupDragZone(container) {
-        container.addEventListener('dragover', e => {
-            e.preventDefault();
-            if (!draggedElement) return;
-            const afterElement = getDragAfterElement(container, e.clientY);
-            if (afterElement == null) {
-                container.appendChild(draggedElement);
-            } else {
-                container.insertBefore(draggedElement, afterElement);
-            }
-        });
-    }
-
-    function getDragAfterElement(container, y) {
-        const draggableElements = [...container.querySelectorAll('.tpl-card:not(.dragging)')];
-        return draggableElements.reduce((closest, child) => {
-            const box = child.getBoundingClientRect();
-            const offset = y - box.top - box.height / 2;
-            if (offset < 0 && offset > closest.offset) {
-                return { offset: offset, element: child };
-            } else {
-                return closest;
-            }
-        }, { offset: Number.NEGATIVE_INFINITY }).element;
-    }
-
-    function handleDragStart() {
-        draggedElement = this;
-        this.classList.add('dragging');
-        isDraggingAction = true;
-    }
-
-    function handleDragEnd() {
-        this.classList.remove('dragging');
-        draggedElement = null;
-        setTimeout(() => isDraggingAction = false, 100);
-
-        if (this.classList.contains('group-card')) {
-            groups = Array.from(document.getElementById('groups-container').children).map(c => c.dataset.group);
-        } else {
-            const newOrderIds = Array.from(document.getElementById('templates-container').children).map(c => c.dataset.id);
-            let newTemplates = templates.filter(t => t.group !== currentGroup);
-            for(let id of newOrderIds) {
-                let tpl = templates.find(t => t.id === id);
-                if(tpl) newTemplates.push(tpl);
-            }
-            templates = newTemplates;
-        }
-        saveToFirebase();
-    }
-
-    // --- GRUPOS ---
-    function openGroupEditor(name = "") {
-        editingGroupId = name;
-        document.getElementById('groupPanel').style.display = "flex";
-        document.getElementById('btn-add-group').style.display = "none";
-        document.getElementById('grp-title').value = name;
-        document.getElementById('btn-del-group').style.display = name ? "block" : "none";
-        document.getElementById('grp-title').focus();
-    }
-
-    function closeGroupEditor() {
-        document.getElementById('groupPanel').style.display = "none";
-        document.getElementById('btn-add-group').style.display = "flex";
-    }
-
-    function saveGroup() {
-        const name = document.getElementById('grp-title').value.trim();
-        if (!name) return;
-        
-        if (editingGroupId) {
-            const oldName = editingGroupId;
-            const idx = groups.indexOf(oldName);
-            groups[idx] = name;
-            templates.forEach(t => { if(t.group === oldName) t.group = name; });
-        } else {
-            if (groups.includes(name)) return showToast('Ya existe el grupo');
-            groups.push(name);
-        }
-        closeGroupEditor(); 
-        saveToFirebase(); 
-        showToast('📁 Grupo guardado');
-    }
-
-    function renderGroups() {
-        const container = document.getElementById('groups-container');
-        container.innerHTML = '';
-        groups.forEach(g => {
-            const count = templates.filter(t => t.group === g).length;
-            const div = document.createElement('div');
-            div.className = 'tpl-card group-card';
-            div.setAttribute('draggable', 'true');
-            div.dataset.group = g;
+    async function verifyAccess() {
+        const inputPin = pinInput.value;
+        if(inputPin === "0132") {
+            SECRET_PIN = inputPin; 
+            authScreen.style.display = 'none';
+            mainContent.style.display = 'flex';
             
-            div.addEventListener('dragstart', handleDragStart);
-            div.addEventListener('dragend', handleDragEnd);
-            div.addEventListener('click', () => { if (!isDraggingAction) openGroupView(g); });
-            div.addEventListener('contextmenu', (e) => { e.preventDefault(); if (!isDraggingAction) openGroupEditor(g); });
-
-            div.innerHTML = `<div class="item-header"><span class="item-title">📁 ${g}</span><span class="item-badge">${count} items</span></div>`;
-            container.appendChild(div);
-        });
-    }
-
-    function deleteCurrentGroup() {
-        if (confirm(`¿Borrar grupo "${editingGroupId}" y sus plantillas?`)) {
-            groups = groups.filter(g => g !== editingGroupId);
-            templates = templates.filter(t => t.group !== editingGroupId);
-            closeGroupEditor();
-            saveToFirebase();
-        }
-    }
-
-    // --- PLANTILLAS ---
-    function openGroupView(g) {
-        currentGroup = g;
-        document.getElementById('current-group-title').innerText = g;
-        document.getElementById('view-groups').classList.remove('active');
-        document.getElementById('view-templates').classList.add('active');
-        renderTemplates();
-    }
-
-    function goBackToGroups() {
-        document.getElementById('view-templates').classList.remove('active');
-        document.getElementById('view-groups').classList.add('active');
-        renderGroups();
-    }
-
-    function openTemplateEditor(id = "") {
-        document.getElementById('editorPanel').style.display = "flex";
-        document.getElementById('btn-toggle-tpl-editor').style.display = "none";
-        if (id) {
-            const t = templates.find(x => x.id === id);
-            document.getElementById('tpl-id').value = t.id;
-            document.getElementById('tpl-title').value = t.title;
-            document.getElementById('tpl-content').value = t.content;
-            document.getElementById('btn-del-tpl').style.display = "block";
+            renderDashboard();
+            await loadFromFirebase();
         } else {
-            document.getElementById('tpl-id').value = "";
-            document.getElementById('tpl-title').value = "";
-            document.getElementById('tpl-content').value = "";
-            document.getElementById('btn-del-tpl').style.display = "none";
+            alert("Código de seguridad incorrecto.");
+            pinInput.value = "";
         }
     }
 
-    function closeTemplateEditor() {
-        document.getElementById('editorPanel').style.display = "none";
-        document.getElementById('btn-toggle-tpl-editor').style.display = "flex";
-    }
+    unlockBtn.addEventListener('click', verifyAccess);
+    pinInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') verifyAccess(); });
 
-    function saveTemplate() {
-        const id = document.getElementById('tpl-id').value;
-        const title = document.getElementById('tpl-title').value.trim();
-        const content = document.getElementById('tpl-content').value.trim();
-        if (!title || !content) return;
-
-        if (id) {
-            const idx = templates.findIndex(t => t.id === id);
-            templates[idx].title = title;
-            templates[idx].content = content;
-        } else {
-            templates.push({ id: 'tpl_' + Date.now(), title, content, group: currentGroup });
-        }
-        closeTemplateEditor(); 
-        saveToFirebase(); 
-        showToast('📝 Plantilla guardada');
-    }
-
-    function renderTemplates() {
-        const container = document.getElementById('templates-container');
-        container.innerHTML = '';
-        const list = templates.filter(t => t.group === currentGroup);
+    async function syncToFirebase() {
+        localStorage.setItem('elite_backup_records', JSON.stringify(records));
+        const encryptedPayload = encryptData(JSON.stringify(records));
         
-        list.forEach(t => {
-            const div = document.createElement('div');
-            div.className = 'tpl-card';
-            div.setAttribute('draggable', 'true');
-            div.dataset.id = t.id;
-
-            div.addEventListener('dragstart', handleDragStart);
-            div.addEventListener('dragend', handleDragEnd);
-            div.addEventListener('click', () => { if (!isDraggingAction) copyTpl(t.content); });
-            div.addEventListener('contextmenu', (e) => { e.preventDefault(); if (!isDraggingAction) openTemplateEditor(t.id); });
-
-            const displayContent = t.content.replace(/FECHA/g, getDynamicDate());
-            div.innerHTML = `<div class="item-header"><span class="item-title">${t.title}</span></div><div class="item-preview">${displayContent}</div>`;
-            container.appendChild(div);
-        });
-    }
-
-    function copyTpl(txt) {
-        const finalTxt = txt.replace(/FECHA/g, getDynamicDate());
-        navigator.clipboard.writeText(finalTxt).then(() => showToast('✅ Copiado'));
-    }
-
-    function deleteCurrentTemplate() {
-        if(confirm('¿Deseas borrar esta plantilla?')) {
-            templates = templates.filter(t => t.id !== document.getElementById('tpl-id').value);
-            closeTemplateEditor();
-            saveToFirebase();
+        try {
+            const response = await fetch(`${FIREBASE_BASE_URL}rewards.json?auth=${FIREBASE_AUTH_TOKEN}`, {
+                method: 'PUT',
+                body: JSON.stringify({ payload: encryptedPayload })
+            });
+            if(!response.ok) throw new Error("Error en respuesta del servidor cloud.");
+            console.log("Nube sincronizada perfectamente.");
+        } catch (error) {
+            console.error("Error sincronizando:", error);
         }
     }
 
-    // --- LISTENERS ---
-    document.getElementById('btn-add-group').addEventListener('click', () => openGroupEditor());
-    document.getElementById('btnSaveGroup').addEventListener('click', saveGroup);
-    document.getElementById('btnCancelGroup').addEventListener('click', closeGroupEditor);
-    document.getElementById('btn-del-group').addEventListener('click', deleteCurrentGroup);
-    document.getElementById('btnBackGroups').addEventListener('click', goBackToGroups);
-    document.getElementById('btn-toggle-tpl-editor').addEventListener('click', () => openTemplateEditor());
-    document.getElementById('btn-save-tpl').addEventListener('click', saveTemplate);
-    document.getElementById('btnCancelTpl').addEventListener('click', closeTemplateEditor);
-    document.getElementById('btn-del-tpl').addEventListener('click', deleteCurrentTemplate);
-    document.getElementById('btnSyncStatus').addEventListener('click', () => { saveToFirebase(); showToast("☁️ Forzando subida..."); });
+    async function loadFromFirebase() {
+        try {
+            const response = await fetch(`${FIREBASE_BASE_URL}rewards.json?auth=${FIREBASE_AUTH_TOKEN}`);
+            if(response.ok) {
+                const data = await response.json();
+                if (data && data.payload) {
+                    const decryptedStr = decryptData(data.payload);
+                    if(decryptedStr) {
+                        records = JSON.parse(decryptedStr);
+                        localStorage.setItem('elite_backup_records', decryptedStr);
+                    }
+                }
+            }
+            renderDashboard();
+        } catch (error) {
+            console.error("Error leyendo de Firebase:", error);
+        }
+    }
 
-    setupDragZone(document.getElementById('groups-container'));
-    setupDragZone(document.getElementById('templates-container'));
+    if (localStorage.getItem('calc_rewards_theme') === 'light') document.body.classList.add('light-mode');
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('light-mode'); 
+        localStorage.setItem('calc_rewards_theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
+    });
+
+    function getNowDateTimeFormatted() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        return `${year}-${month}-${day} ${hours}:${minutes}`;
+    }
+
+    async function addLogRecord() {
+        const bank = document.getElementById('reg-bank').value;
+        const type = document.getElementById('reg-type').value;
+        const amount = parseFloat(regAmount.value);
+        const timestamp = getNowDateTimeFormatted();
+
+        if (!amount || amount <= 0) {
+            alert('Por favor, ingresa una cantidad de unidades válida.');
+            return;
+        }
+
+        const finalAmount = type === 'add' ? amount : -amount;
+        const record = { id: Date.now(), bank: bank, amount: finalAmount, datetime: timestamp };
+
+        records.unshift(record); 
+        regAmount.value = '';
+        
+        renderDashboard();
+        await syncToFirebase(); 
+    }
+
+    async function deleteRecord(id) {
+        records = records.filter(rec => rec.id !== id);
+        renderDashboard();
+        await syncToFirebase(); 
+    }
+
+    window.deleteRecord = deleteRecord; 
+
+    function renderDashboard() {
+        const tbody = document.getElementById('history-table-body');
+        tbody.innerHTML = '';
+
+        let totalPtsBBVA = 0;
+        let totalMilesIBK = 0;
+
+        records.forEach(rec => {
+            let eqSoles = 0;
+            if (rec.bank === 'bbva') {
+                totalPtsBBVA += rec.amount;
+                eqSoles = rec.amount / RATE_BBVA;
+            } else {
+                totalMilesIBK += rec.amount;
+                eqSoles = rec.amount * RATE_IBK;
+            }
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="color: var(--text-dim); font-family: monospace;">${rec.datetime}</td>
+                <td class="${rec.bank === 'bbva' ? 'txt-bbva' : 'txt-ibk'}">${rec.bank.toUpperCase()}</td>
+                <td style="font-weight:bold; font-family: monospace;">${rec.amount > 0 ? '+' : ''}${rec.amount}</td>
+                <td style="font-family: monospace; color: ${eqSoles >= 0 ? 'var(--text)' : 'var(--danger)'}">S/ ${eqSoles.toFixed(2)}</td>
+                <td><button class="btn-del" onclick="deleteRecord(${rec.id})">✕</button></td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        const solesBBVA = totalPtsBBVA / RATE_BBVA;
+        const solesIBK = totalMilesIBK * RATE_IBK;
+        const totalGlobal = solesBBVA + solesIBK;
+
+        document.getElementById('balance-pts-bbva').innerText = `${totalPtsBBVA.toLocaleString('en-US')} pts`;
+        document.getElementById('balance-soles-bbva').innerText = `S/ ${solesBBVA.toFixed(2)}`;
+        document.getElementById('balance-miles-ibk').innerText = `${totalMilesIBK.toLocaleString('en-US')} mll`;
+        document.getElementById('balance-soles-ibk').innerText = `S/ ${solesIBK.toFixed(2)}`;
+        document.getElementById('global-total').innerText = `S/ ${totalGlobal.toFixed(2)}`;
+
+        const cardBBVA = document.querySelector('.result-bbva');
+        const cardIBK = document.querySelector('.result-ibk');
+        cardBBVA.style.boxShadow = cardIBK.style.boxShadow = 'none';
+
+        if (solesBBVA > 0 || solesIBK > 0) {
+            if (solesBBVA > solesIBK) cardBBVA.style.boxShadow = '0 0 12px rgba(33, 150, 243, 0.4)';
+            else if (solesIBK > solesBBVA) cardIBK.style.boxShadow = '0 0 12px rgba(46, 213, 115, 0.4)';
+        }
+    }
+
+    saveBtn.addEventListener('click', addLogRecord);
+
+    function calcF2() {
+        const amountSoles = parseFloat(f2Amount.value) || 0;
+        const tc = parseFloat(f2Tc.value) || 3.75;
+        const ibkMultiplier = parseFloat(f2Category.value) || 1;
+
+        const bbvaPoints = (amountSoles / 4) * 1.75;
+        document.getElementById('f2-res-bbva').innerText = bbvaPoints.toFixed(2);
+
+        if (tc > 0) {
+            const amountUSD = amountSoles / tc;
+            document.getElementById('f2-res-ibk').innerText = (amountUSD * ibkMultiplier).toFixed(2);
+        } else {
+            document.getElementById('f2-res-ibk').innerText = "0.00";
+        }
+    }
+
+    f2Amount.addEventListener('input', calcF2);
+    f2Tc.addEventListener('input', calcF2);
+    f2Category.addEventListener('change', calcF2);
+
+    calcF2();
 </script>
+
 </body>
 </html>
