@@ -240,7 +240,7 @@
 </div>
 
 <script>
-    // Configuración REST de Firebase segura por Token Secreto
+    // 🔗 URL Oficial Directa (Verificada en tu captura image_5309cc.png)
     const FIREBASE_BASE_URL = "https://calculadora-recompensas-elite-default-rtdb.firebaseio.com/";
     const FIREBASE_AUTH_TOKEN = "5QdVyvxhQm9OILtpW5QKbur4U2T3ia5JaIe3M7lN";
 
@@ -292,6 +292,7 @@
     unlockBtn.addEventListener('click', verifyAccess);
     pinInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') verifyAccess(); });
 
+    // Canal REST directo nativo (Sincronización Cloud con bypass de Token Secreto)
     async function syncToFirebase() {
         localStorage.setItem('elite_backup_records', JSON.stringify(records));
         const encryptedPayload = encryptData(JSON.stringify(records));
@@ -299,9 +300,10 @@
         try {
             const response = await fetch(`${FIREBASE_BASE_URL}rewards.json?auth=${FIREBASE_AUTH_TOKEN}`, {
                 method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ payload: encryptedPayload })
             });
-            if(!response.ok) throw new Error("Error en respuesta del servidor cloud.");
+            if(!response.ok) throw new Error("Error en el servidor remoto.");
             console.log("Nube sincronizada perfectamente.");
         } catch (error) {
             console.error("Error sincronizando:", error);
