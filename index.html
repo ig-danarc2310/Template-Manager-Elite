@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Template Manager Elite 📝</title>
-    <link rel="icon" href="data:image/svg+xml,&lt;svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22&gt;&lt;text y=%22.9em%22 font-size=%2290%22&gt;📝&lt;/text&gt;&lt;/svg&gt;">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📝</text></svg>">
     
     <style>
         /* SISTEMA DE DISEÑO ELITE - COMPACTO Y CENTRADO */
@@ -93,10 +93,16 @@
         .btn-export-html {
             width: 100%; background: var(--accent); color: #000; border: none; padding: 14px; 
             border-radius: 8px; font-weight: bold; text-transform: uppercase; cursor: pointer; 
-            font-size: 0.85rem; transition: 0.2s; margin-top: 10px; box-shadow: 0 4px 15px rgba(33, 150, 243, 0.2);
+            font-size: 0.85rem; transition: 0.2s; margin-top: 5px; box-shadow: 0 4px 15px rgba(33, 150, 243, 0.2);
         }
         .btn-export-html:active { transform: scale(0.98); }
         .btn-export-html:hover { filter: brightness(1.1); }
+
+        .btn-export-secondary {
+            background: transparent; border: 1px solid var(--accent); color: var(--accent);
+            box-shadow: none;
+        }
+        .btn-export-secondary:hover { background: rgba(33, 150, 243, 0.1); }
 
         /* TARJETAS Y DRAG & DROP */
         .items-list { display: flex; flex-direction: column; gap: 10px; }
@@ -164,10 +170,10 @@
                     <button id="btn-del-group" class="btn-action" style="color: var(--danger); border-color: var(--danger); margin-top:5px; display:none;">🗑️ Eliminar Grupo</button>
                 </div>
                 
-                <div id="groups-container" class="items-list">
-                    </div>
+                <div id="groups-container" class="items-list"></div>
 
-                <button class="btn-export-html" id="btnSyncStatus">☁️ Forzar Resincronización Local</button>
+                <button class="btn-export-html btn-export-secondary" id="btnExportHtml">📥 Exportar Respaldo HTML</button>
+                <button class="btn-export-html" id="btnSyncStatus">☁️ Forzar Resincronización Cloud</button>
             </div>
 
             <div id="view-templates" class="view-section">
@@ -195,8 +201,7 @@
                     <button id="btn-del-tpl" class="btn-action" style="color: var(--danger); border-color: var(--danger); margin-top: 5px; display: none;">🗑️ Eliminar Plantilla</button>
                 </div>
                 
-                <div id="templates-container" class="items-list">
-                    </div>
+                <div id="templates-container" class="items-list"></div>
             </div>
 
         </div>
@@ -226,9 +231,14 @@
     let draggedElement = null;
     let isDraggingAction = false;
 
-    // Base de datos de respaldo local completamente limpia para iniciar desde cero
-    const defaultGroups = [];
-    const defaultTemplates = [];
+    // --- CARGA INICIAL DESDE LOCALSTORAGE ---
+    try {
+        const localData = JSON.parse(localStorage.getItem('template_manager_cache') || '{}');
+        if (Array.isArray(localData.groups)) groups = localData.groups;
+        if (Array.isArray(localData.templates)) templates = localData.templates;
+    } catch(e) {
+        console.warn("Error leyendo almacenamiento local:", e);
+    }
 
     if (localStorage.getItem('templates_theme') === 'light') document.body.classList.add('light-mode');
     document.getElementById('themeToggleBtn').addEventListener('click', () => {
@@ -247,24 +257,34 @@
         return `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getFullYear()).slice(-2)}`;
     }
 
+    // --- PERSISTENCIA LOCAL ---
+    function saveToLocalStorage() {
+        try {
+            localStorage.setItem('template_manager_cache', JSON.stringify({ groups, templates }));
+        } catch(e) {
+            console.warn("No se pudo guardar en LocalStorage:", e);
+        }
+    }
+
     // --- ESCUCHA SEGURA EN TIEMPO REAL ---
     onSnapshot(docRef, (docSnap) => {
         if (docSnap.exists()) {
             const data = docSnap.data();
-            templates = data.templates || [];
-            groups = data.groups || [];
-        } else {
-            groups = [...defaultGroups];
-            templates = [...defaultTemplates];
-            saveToFirebase();
+            const cloudTemplates = data.templates || [];
+            const cloudGroups = data.groups || [];
+
+            // Si la nube tiene datos o local está vacío, sincronizar con la nube
+            if (cloudGroups.length > 0 || cloudTemplates.length > 0 || (groups.length === 0 && templates.length === 0)) {
+                templates = cloudTemplates;
+                groups = cloudGroups;
+                saveToLocalStorage();
+            }
         }
         updateUI();
     }, (error) => {
-        console.warn("Firestore denegado o cargando offline. Usando estructura local segura.", error);
-        groups = groups.length ? groups : [...defaultGroups];
-        templates = templates.length ? templates : [...defaultTemplates];
+        console.warn("Firestore inaccesible. Usando copia en caché local.", error);
         updateUI();
-        document.getElementById('mainSubtitle').innerText = "Modo Offline / Revisa Reglas Firestore";
+        document.getElementById('mainSubtitle').innerText = "Modo Local / Caché Activa";
     });
 
     function updateUI() {
@@ -276,12 +296,44 @@
     }
 
     async function saveToFirebase() {
+        saveToLocalStorage();
         try {
-            await setDoc(docRef, { templates: templates, groups: groups });
+            await setDoc(docRef, { templates: templates, groups: groups }, { merge: true });
         } catch (e) {
             console.error("Error al sincronizar con Firebase:", e);
-            showToast("❌ Error al sincronizar online");
+            showToast("⚠️ Guardado solo en local");
         }
+    }
+
+    // --- EXPORTAR RESPALDO HTML ---
+    function exportarRespaldoHTML() {
+        const d = new Date();
+        const pad = n => String(n).padStart(2, '0');
+        const formatoFecha = `${pad(d.getDate())}.${pad(d.getMonth() + 1)}...${pad(d.getHours())}.${pad(d.getMinutes())}`;
+        const nombreArchivo = `Template_Manager_Elite_${formatoFecha}.html`;
+
+        const scriptIncrustado = `
+            <script>
+                localStorage.setItem('template_manager_cache', JSON.stringify({
+                    groups: ${JSON.stringify(groups)},
+                    templates: ${JSON.stringify(templates)}
+                }));
+            <\/script>
+        `;
+
+        const htmlCompleto = "<!DOCTYPE html>\n" + document.documentElement.outerHTML.replace('</body>', `${scriptIncrustado}\n</body>`);
+        const blob = new Blob([htmlCompleto], { type: 'text/html;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = nombreArchivo;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        showToast('📥 Respaldo exportado');
     }
 
     // --- DRAG & DROP ---
@@ -498,7 +550,8 @@
     document.getElementById('btn-save-tpl').addEventListener('click', saveTemplate);
     document.getElementById('btnCancelTpl').addEventListener('click', closeTemplateEditor);
     document.getElementById('btn-del-tpl').addEventListener('click', deleteCurrentTemplate);
-    document.getElementById('btnSyncStatus').addEventListener('click', () => { saveToFirebase(); showToast("☁️ Forzando subida..."); });
+    document.getElementById('btnExportHtml').addEventListener('click', exportarRespaldoHTML);
+    document.getElementById('btnSyncStatus').addEventListener('click', () => { saveToFirebase(); showToast("☁️ Sincronización forzada"); });
 
     setupDragZone(document.getElementById('groups-container'));
     setupDragZone(document.getElementById('templates-container'));
