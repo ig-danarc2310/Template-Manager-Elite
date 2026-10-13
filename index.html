@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Template Manager Elite 📝</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📝</text></svg>">
+    <title>Template Manager Elite</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%231E90FF' d='M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z'/%3E%3C/svg%3E">
     
     <style>
-        /* SISTEMA DE DISEÑO ELITE - COMPACTO Y CENTRADO */
         :root {
             --bg: #050505;
             --surface: #111111;
@@ -21,95 +20,221 @@
             --danger: #ff4757;
             --radius: 12px;
             --main-width: 500px;
+
+            /* Colores de botones en modo oscuro */
+            --btn-sync-bg: #2676d0;
+            --btn-sync-color: #ffffff;
+            --btn-sync-hover-bg: #1E90FF;
+            --btn-sync-hover-color: #000000;
         }
 
         body.light-mode {
-            --bg: #f4f7f6; --surface: #ffffff; --input-bg: #f0f2f5;
-            --text: #1a1a1a; --text-dim: #666; --border: #dcdde1;
+            --bg: #f4f7f6;
+            --surface: #ffffff;
+            --input-bg: #f0f2f5;
+            --text: #1a1a1a;
+            --text-dim: #666;
+            --border: #dcdde1;
             --accent: #1e90ff;
+
+            /* Colores de botones en modo claro */
+            --btn-sync-bg: #1E90FF;
+            --btn-sync-color: #000000;
+            --btn-sync-hover-bg: #2676d0;
+            --btn-sync-hover-color: #ffffff;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; outline: none; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            outline: none;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
         
         body { 
-            background-color: var(--bg); color: var(--text); 
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            min-height: 100vh; padding: 20px; transition: all 0.3s ease;
+            background-color: var(--bg);
+            color: var(--text); 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            transition: all 0.3s ease;
         }
 
         .workspace { 
-            width: 100%; max-width: var(--main-width); display: flex; flex-direction: column; gap: 15px; 
-            margin: auto; animation: fadeIn 0.4s ease;
+            width: 100%;
+            max-width: var(--main-width);
+            display: flex;
+            flex-direction: column;
+            gap: 15px; 
+            margin: auto;
+            animation: fadeIn 0.4s ease;
         }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
         .card { 
-            background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); 
-            padding: 25px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 12px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius); 
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
         }
 
-        h1 { font-size: 1.4rem; color: var(--text); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; cursor: pointer; user-select: none; text-align: center;}
+        h1 {
+            font-size: 1.4rem;
+            color: var(--text);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 2px;
+            cursor: pointer;
+            user-select: none;
+            text-align: center;
+        }
         h1 span { color: var(--accent); }
-        .subtitle { font-size: 0.75rem; color: var(--text-dim); margin-bottom: 10px; text-align: center; }
+        .subtitle {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            margin-bottom: 10px;
+            text-align: center;
+        }
 
-        /* FORMULARIOS */
         .editor-panel {
-            background: rgba(33, 150, 243, 0.05); border: 1px dashed var(--accent); border-radius: 8px;
-            padding: 15px; display: none; flex-direction: column; gap: 10px; animation: fadeIn 0.3s ease;
+            background: rgba(33, 150, 243, 0.05);
+            border: 1px dashed var(--accent);
+            border-radius: 8px;
+            padding: 15px;
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            animation: fadeIn 0.3s ease;
         }
         
         .f-col { display: flex; flex-direction: column; gap: 5px; }
-        label { font-size: 0.7rem; font-weight: bold; color: var(--text-dim); text-transform: uppercase; }
+        label {
+            font-size: 0.7rem;
+            font-weight: bold;
+            color: var(--text-dim);
+            text-transform: uppercase;
+        }
         
         input, textarea { 
-            width: 100%; padding: 10px; background: var(--input-bg); border: 1px solid var(--border);
-            border-radius: 8px; color: var(--text); font-size: 0.9rem; transition: 0.2s;
+            width: 100%;
+            padding: 10px;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 0.9rem;
+            transition: 0.2s;
         }
-        textarea { resize: vertical; min-height: 80px; line-height: 1.4;}
+        textarea { resize: vertical; min-height: 80px; line-height: 1.4; }
         input:focus, textarea:focus { border-color: var(--accent); }
 
-        /* BOTONES */
+        /* ESTILO UNIFICADO PARA BOTONES DE ACCIÓN PRINCIPALES */
         .btn-action {
-            background: transparent; border: 1px solid var(--border); color: var(--text);
-            padding: 10px; border-radius: 8px; font-size: 0.75rem; font-weight: bold;
-            text-transform: uppercase; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;
+            width: 100%;
+            background-color: var(--btn-sync-bg);
+            color: var(--btn-sync-color);
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: background-color 0.25s ease, color 0.25s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
-        .btn-action:hover { border-color: var(--accent); color: var(--accent); background: rgba(33, 150, 243, 0.05); }
+        .btn-action:hover {
+            background-color: var(--btn-sync-hover-bg);
+            color: var(--btn-sync-hover-color);
+        }
+        .btn-action:active { transform: scale(0.98); }
 
         .btn-main {
-            width: 100%; background: var(--accent); color: #000; border: none; padding: 12px; border-radius: 8px; 
-            font-weight: bold; text-transform: uppercase; cursor: pointer; font-size: 0.8rem; transition: 0.2s;
+            width: 100%;
+            background-color: var(--btn-sync-bg);
+            color: var(--btn-sync-color);
+            border: none;
+            padding: 12px;
+            border-radius: 8px; 
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: background-color 0.25s ease, color 0.25s ease;
+        }
+        .btn-main:hover {
+            background-color: var(--btn-sync-hover-bg);
+            color: var(--btn-sync-hover-color);
         }
         .btn-main:active { transform: scale(0.98); }
 
         .btn-back {
-            background: rgba(128, 128, 128, 0.1); color: var(--text); border: 1px solid var(--border);
-            padding: 8px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.75rem;
-            display: inline-flex; align-items: center; gap: 6px; transition: 0.2s;
+            background-color: var(--btn-sync-bg);
+            color: var(--btn-sync-color);
+            border: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.75rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: background-color 0.25s ease, color 0.25s ease;
         }
-        .btn-back:hover { background: var(--border); }
-
-        .btn-export-html {
-            width: 100%; background: var(--accent); color: #000; border: none; padding: 14px; 
-            border-radius: 8px; font-weight: bold; text-transform: uppercase; cursor: pointer; 
-            font-size: 0.85rem; transition: 0.2s; margin-top: 5px; box-shadow: 0 4px 15px rgba(33, 150, 243, 0.2);
+        .btn-back:hover {
+            background-color: var(--btn-sync-hover-bg);
+            color: var(--btn-sync-hover-color);
         }
-        .btn-export-html:active { transform: scale(0.98); }
-        .btn-export-html:hover { filter: brightness(1.1); }
+        .btn-back:active { transform: scale(0.98); }
 
-        .btn-export-secondary {
-            background: transparent; border: 1px solid var(--accent); color: var(--accent);
-            box-shadow: none;
+        .btn-sync-action {
+            width: 100%;
+            background-color: var(--btn-sync-bg);
+            color: var(--btn-sync-color);
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: background-color 0.25s ease, color 0.25s ease;
+            margin-top: 5px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
-        .btn-export-secondary:hover { background: rgba(33, 150, 243, 0.1); }
+        .btn-sync-action:hover {
+            background-color: var(--btn-sync-hover-bg);
+            color: var(--btn-sync-hover-color);
+        }
+        .btn-sync-action:active { transform: scale(0.98); }
 
-        /* TARJETAS Y DRAG & DROP */
         .items-list { display: flex; flex-direction: column; gap: 10px; }
 
         .tpl-card {
-            background: var(--input-bg); border: 1px solid var(--border); border-left: 4px solid var(--accent);
-            border-radius: 8px; padding: 12px 15px; cursor: grab; transition: transform 0.2s, border-color 0.2s; position: relative;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--accent);
+            border-radius: 8px;
+            padding: 12px 15px;
+            cursor: grab;
+            transition: transform 0.2s, border-color 0.2s;
+            position: relative;
             user-select: none;
         }
         .tpl-card:hover { border-color: var(--text-dim); }
@@ -124,29 +249,64 @@
         .group-card { border-left-color: var(--success); }
         .group-card:hover { border-color: var(--success); }
 
-        .item-header { display: flex; justify-content: space-between; align-items: center; pointer-events: none;}
-        .item-title { font-size: 0.9rem; font-weight: bold; color: var(--text); }
-        .item-badge { background: var(--surface); color: var(--text-dim); padding: 2px 8px; border-radius: 10px; font-size: 0.65rem; border: 1px solid var(--border);}
-
-        .item-preview { 
-            font-size: 0.8rem; color: var(--text-dim); margin-top: 5px; 
-            white-space: pre-wrap; pointer-events: none;
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            pointer-events: none;
+        }
+        .item-title {
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: var(--text);
+        }
+        .item-badge {
+            background: var(--surface);
+            color: var(--text-dim);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.65rem;
+            border: 1px solid var(--border);
         }
 
-        /* VISTAS */
-        .view-section { display: none; flex-direction: column; gap: 12px; width: 100%; animation: fadeIn 0.3s ease; }
+        .item-preview { 
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            margin-top: 5px; 
+            white-space: pre-wrap;
+            pointer-events: none;
+        }
+
+        .view-section {
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+            animation: fadeIn 0.3s ease;
+        }
         .view-section.active { display: flex; }
 
         #toast {
-            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--success); color: #000; 
-            padding: 10px 20px; border-radius: 30px; font-weight: bold; display: none; z-index: 9999; font-size: 0.8rem;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3); animation: fadeIn 0.2s ease;
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--success);
+            color: #000; 
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-weight: bold;
+            display: none;
+            z-index: 9999;
+            font-size: 0.8rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            animation: fadeIn 0.2s ease;
         }
     </style>
 </head>
 <body class="light-mode">
 
-    <div id="toast" style="display: none;">📝 Guardado</div>
+    <div id="toast" style="display: none;">Guardado</div>
 
     <div class="workspace">
         <div class="card">
@@ -156,49 +316,49 @@
             </div>
 
             <div id="view-groups" class="view-section active">
-                <button class="btn-action" id="btn-add-group">➕ Crear Nuevo Grupo</button>
+                <button class="btn-action" id="btn-add-group">Crear Nuevo Grupo</button>
 
                 <div class="editor-panel" id="groupPanel">
                     <div class="f-col">
                         <label>Nombre del Grupo</label>
-                        <input type="text" id="grp-title" placeholder="Ej: Gestión de ATC...">
+                        <input type="text" id="grp-title" placeholder="Ej: Gestion de ATC...">
                     </div>
                     <div style="display: flex; gap: 8px; margin-top: 5px;">
-                        <button class="btn-main" id="btnSaveGroup">💾 Guardar</button>
-                        <button class="btn-main" style="background: transparent; border: 1px solid var(--border); color: var(--text);" id="btnCancelGroup">Cancelar</button>
+                        <button class="btn-main" id="btnSaveGroup">Guardar</button>
+                        <button class="btn-main" id="btnCancelGroup">Cancelar</button>
                     </div>
-                    <button id="btn-del-group" class="btn-action" style="color: var(--danger); border-color: var(--danger); margin-top:5px; display:none;">🗑️ Eliminar Grupo</button>
+                    <button id="btn-del-group" class="btn-action" style="margin-top:5px; display:none;">Eliminar Grupo</button>
                 </div>
                 
                 <div id="groups-container" class="items-list"></div>
 
-                <button class="btn-export-html btn-export-secondary" id="btnExportHtml">📥 Exportar Respaldo HTML</button>
-                <button class="btn-export-html" id="btnSyncStatus">☁️ Forzar Resincronización Cloud</button>
+                <button class="btn-sync-action" id="btnExportHtml">Exportar Respaldo HTML</button>
+                <button class="btn-sync-action" id="btnSyncStatus">Forzar Resincronizacion Cloud</button>
             </div>
 
             <div id="view-templates" class="view-section">
                 <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 10px;">
-                    <button class="btn-back" id="btnBackGroups">🔙 Volver</button>
+                    <button class="btn-back" id="btnBackGroups">Volver</button>
                     <div style="font-weight: bold; color: var(--accent); font-size: 0.85rem;" id="current-group-title">--</div>
                 </div>
 
-                <button class="btn-action" id="btn-toggle-tpl-editor">➕ Añadir Plantilla</button>
+                <button class="btn-action" id="btn-toggle-tpl-editor">Anadir Plantilla</button>
 
                 <div class="editor-panel" id="editorPanel" style="display: none;">
                     <input type="hidden" id="tpl-id" value="">
                     <div class="f-col">
                         <label>Nombre</label>
-                        <input type="text" id="tpl-title" placeholder="Título...">
+                        <input type="text" id="tpl-title" placeholder="Titulo...">
                     </div>
                     <div class="f-col">
-                        <label>Contenido (Usa la palabra FECHA en mayúscula)</label>
-                        <textarea id="tpl-content" placeholder="Escribe aquí... usa FECHA y se reemplazará sola al copiar"></textarea>
+                        <label>Contenido (Usa la palabra FECHA en mayuscula)</label>
+                        <textarea id="tpl-content" placeholder="Escribe aqui... usa FECHA y se reemplazara sola al copiar"></textarea>
                     </div>
                     <div style="display: flex; gap: 8px; margin-top: 5px;">
-                        <button id="btn-save-tpl" class="btn-main">💾 Guardar</button>
-                        <button class="btn-main" style="background: transparent; border: 1px solid var(--border); color: var(--text);" id="btnCancelTpl">Cancelar</button>
+                        <button id="btn-save-tpl" class="btn-main">Guardar</button>
+                        <button class="btn-main" id="btnCancelTpl">Cancelar</button>
                     </div>
-                    <button id="btn-del-tpl" class="btn-action" style="color: var(--danger); border-color: var(--danger); margin-top: 5px; display: none;">🗑️ Eliminar Plantilla</button>
+                    <button id="btn-del-tpl" class="btn-action" style="margin-top: 5px; display: none;">Eliminar Plantilla</button>
                 </div>
                 
                 <div id="templates-container" class="items-list"></div>
@@ -206,6 +366,10 @@
 
         </div>
     </div>
+
+<script id="embedded-data-storage">
+    /* INYECCION_DE_DATOS_RESPALDO */
+</script>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
@@ -231,16 +395,30 @@
     let draggedElement = null;
     let isDraggingAction = false;
 
-    // --- CARGA INICIAL DESDE LOCALSTORAGE ---
-    try {
-        const localData = JSON.parse(localStorage.getItem('template_manager_cache') || '{}');
-        if (Array.isArray(localData.groups)) groups = localData.groups;
-        if (Array.isArray(localData.templates)) templates = localData.templates;
-    } catch(e) {
-        console.warn("Error leyendo almacenamiento local:", e);
+    if (window.__EMBEDDED_BACKUP__) {
+        try {
+            if (Array.isArray(window.__EMBEDDED_BACKUP__.groups)) groups = window.__EMBEDDED_BACKUP__.groups;
+            if (Array.isArray(window.__EMBEDDED_BACKUP__.templates)) templates = window.__EMBEDDED_BACKUP__.templates;
+            localStorage.setItem('template_manager_cache', JSON.stringify({ groups, templates }));
+        } catch(e) {
+            console.warn("Error leyendo datos embebidos:", e);
+        }
+    } else {
+        try {
+            const localData = JSON.parse(localStorage.getItem('template_manager_cache') || '{}');
+            if (Array.isArray(localData.groups)) groups = localData.groups;
+            if (Array.isArray(localData.templates)) templates = localData.templates;
+        } catch(e) {
+            console.warn("Error leyendo almacenamiento local:", e);
+        }
     }
 
-    if (localStorage.getItem('templates_theme') === 'light') document.body.classList.add('light-mode');
+    if (localStorage.getItem('templates_theme') === 'light') {
+        document.body.classList.add('light-mode');
+    } else if (localStorage.getItem('templates_theme') === 'dark') {
+        document.body.classList.remove('light-mode');
+    }
+
     document.getElementById('themeToggleBtn').addEventListener('click', () => {
         document.body.classList.toggle('light-mode');
         localStorage.setItem('templates_theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
@@ -248,7 +426,8 @@
 
     function showToast(msg) {
         const t = document.getElementById('toast');
-        t.innerText = msg; t.style.display = 'block';
+        t.innerText = msg;
+        t.style.display = 'block';
         setTimeout(() => t.style.display = 'none', 1500);
     }
 
@@ -257,7 +436,6 @@
         return `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getFullYear()).slice(-2)}`;
     }
 
-    // --- PERSISTENCIA LOCAL ---
     function saveToLocalStorage() {
         try {
             localStorage.setItem('template_manager_cache', JSON.stringify({ groups, templates }));
@@ -266,14 +444,12 @@
         }
     }
 
-    // --- ESCUCHA SEGURA EN TIEMPO REAL ---
     onSnapshot(docRef, (docSnap) => {
         if (docSnap.exists()) {
             const data = docSnap.data();
             const cloudTemplates = data.templates || [];
             const cloudGroups = data.groups || [];
 
-            // Si la nube tiene datos o local está vacío, sincronizar con la nube
             if (cloudGroups.length > 0 || cloudTemplates.length > 0 || (groups.length === 0 && templates.length === 0)) {
                 templates = cloudTemplates;
                 groups = cloudGroups;
@@ -282,9 +458,9 @@
         }
         updateUI();
     }, (error) => {
-        console.warn("Firestore inaccesible. Usando copia en caché local.", error);
+        console.warn("Firestore inaccesible. Usando copia en cache local.", error);
         updateUI();
-        document.getElementById('mainSubtitle').innerText = "Modo Local / Caché Activa";
+        document.getElementById('mainSubtitle').innerText = "Modo Local / Cache Activa";
     });
 
     function updateUI() {
@@ -301,27 +477,34 @@
             await setDoc(docRef, { templates: templates, groups: groups }, { merge: true });
         } catch (e) {
             console.error("Error al sincronizar con Firebase:", e);
-            showToast("⚠️ Guardado solo en local");
+            showToast("Guardado solo en local");
         }
     }
 
-    // --- EXPORTAR RESPALDO HTML ---
     function exportarRespaldoHTML() {
         const d = new Date();
         const pad = n => String(n).padStart(2, '0');
         const formatoFecha = `${pad(d.getDate())}.${pad(d.getMonth() + 1)}...${pad(d.getHours())}.${pad(d.getMinutes())}`;
         const nombreArchivo = `Template_Manager_Elite_${formatoFecha}.html`;
 
-        const scriptIncrustado = `
-            <script>
-                localStorage.setItem('template_manager_cache', JSON.stringify({
-                    groups: ${JSON.stringify(groups)},
-                    templates: ${JSON.stringify(templates)}
-                }));
-            <\/script>
-        `;
+        const docClon = document.documentElement.cloneNode(true);
 
-        const htmlCompleto = "<!DOCTYPE html>\n" + document.documentElement.outerHTML.replace('</body>', `${scriptIncrustado}\n</body>`);
+        const groupsContainer = docClon.querySelector('#groups-container');
+        if (groupsContainer) groupsContainer.innerHTML = '';
+        const templatesContainer = docClon.querySelector('#templates-container');
+        if (templatesContainer) templatesContainer.innerHTML = '';
+
+        const embeddedScriptTag = docClon.querySelector('#embedded-data-storage');
+        const payloadData = {
+            groups: groups,
+            templates: templates
+        };
+
+        if (embeddedScriptTag) {
+            embeddedScriptTag.textContent = `\n    window.__EMBEDDED_BACKUP__ = ${JSON.stringify(payloadData, null, 2)};\n`;
+        }
+
+        const htmlCompleto = "<!DOCTYPE html>\n" + docClon.outerHTML;
         const blob = new Blob([htmlCompleto], { type: 'text/html;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
 
@@ -333,10 +516,9 @@
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
 
-        showToast('📥 Respaldo exportado');
+        showToast('Respaldo exportado');
     }
 
-    // --- DRAG & DROP ---
     function setupDragZone(container) {
         container.addEventListener('dragover', e => {
             e.preventDefault();
@@ -388,13 +570,12 @@
         saveToFirebase();
     }
 
-    // --- GRUPOS ---
     function openGroupEditor(name = "") {
         editingGroupId = name;
         document.getElementById('groupPanel').style.display = "flex";
         document.getElementById('btn-add-group').style.display = "none";
         document.getElementById('grp-title').value = name;
-        document.getElementById('btn-del-group').style.display = name ? "block" : "none";
+        document.getElementById('btn-del-group').style.display = name ? "flex" : "none";
         document.getElementById('grp-title').focus();
     }
 
@@ -413,12 +594,15 @@
             groups[idx] = name;
             templates.forEach(t => { if(t.group === oldName) t.group = name; });
         } else {
-            if (groups.includes(name)) return showToast('Ya existe el grupo');
+            if (groups.includes(name)) {
+                showToast('Ya existe el grupo');
+                return;
+            }
             groups.push(name);
         }
         closeGroupEditor(); 
         saveToFirebase(); 
-        showToast('📁 Grupo guardado');
+        showToast('Grupo guardado');
     }
 
     function renderGroups() {
@@ -436,13 +620,13 @@
             div.addEventListener('click', () => { if (!isDraggingAction) openGroupView(g); });
             div.addEventListener('contextmenu', (e) => { e.preventDefault(); if (!isDraggingAction) openGroupEditor(g); });
 
-            div.innerHTML = `<div class="item-header"><span class="item-title">📁 ${g}</span><span class="item-badge">${count} items</span></div>`;
+            div.innerHTML = `<div class="item-header"><span class="item-title">${g}</span><span class="item-badge">${count} items</span></div>`;
             container.appendChild(div);
         });
     }
 
     function deleteCurrentGroup() {
-        if (confirm(`¿Borrar grupo "${editingGroupId}" y sus plantillas?`)) {
+        if (confirm(`Deseas borrar el grupo "${editingGroupId}" y sus plantillas?`)) {
             groups = groups.filter(g => g !== editingGroupId);
             templates = templates.filter(t => t.group !== editingGroupId);
             closeGroupEditor();
@@ -450,7 +634,6 @@
         }
     }
 
-    // --- PLANTILLAS ---
     function openGroupView(g) {
         currentGroup = g;
         document.getElementById('current-group-title').innerText = g;
@@ -473,7 +656,7 @@
             document.getElementById('tpl-id').value = t.id;
             document.getElementById('tpl-title').value = t.title;
             document.getElementById('tpl-content').value = t.content;
-            document.getElementById('btn-del-tpl').style.display = "block";
+            document.getElementById('btn-del-tpl').style.display = "flex";
         } else {
             document.getElementById('tpl-id').value = "";
             document.getElementById('tpl-title').value = "";
@@ -502,7 +685,7 @@
         }
         closeTemplateEditor(); 
         saveToFirebase(); 
-        showToast('📝 Plantilla guardada');
+        showToast('Plantilla guardada');
     }
 
     function renderTemplates() {
@@ -529,18 +712,17 @@
 
     function copyTpl(txt) {
         const finalTxt = txt.replace(/FECHA/g, getDynamicDate());
-        navigator.clipboard.writeText(finalTxt).then(() => showToast('✅ Copiado'));
+        navigator.clipboard.writeText(finalTxt).then(() => showToast('Copiado'));
     }
 
     function deleteCurrentTemplate() {
-        if(confirm('¿Deseas borrar esta plantilla?')) {
+        if (confirm('Deseas borrar esta plantilla?')) {
             templates = templates.filter(t => t.id !== document.getElementById('tpl-id').value);
             closeTemplateEditor();
             saveToFirebase();
         }
     }
 
-    // --- LISTENERS ---
     document.getElementById('btn-add-group').addEventListener('click', () => openGroupEditor());
     document.getElementById('btnSaveGroup').addEventListener('click', saveGroup);
     document.getElementById('btnCancelGroup').addEventListener('click', closeGroupEditor);
@@ -551,7 +733,7 @@
     document.getElementById('btnCancelTpl').addEventListener('click', closeTemplateEditor);
     document.getElementById('btn-del-tpl').addEventListener('click', deleteCurrentTemplate);
     document.getElementById('btnExportHtml').addEventListener('click', exportarRespaldoHTML);
-    document.getElementById('btnSyncStatus').addEventListener('click', () => { saveToFirebase(); showToast("☁️ Sincronización forzada"); });
+    document.getElementById('btnSyncStatus').addEventListener('click', () => { saveToFirebase(); showToast("Sincronizacion forzada"); });
 
     setupDragZone(document.getElementById('groups-container'));
     setupDragZone(document.getElementById('templates-container'));
